@@ -98,18 +98,17 @@ export function USAHeatmap() {
 
         {/* Project Markers */}
         {filtered.map((project) => {
-          const { x, y } = latLngToXY(project.address.lat, project.address.lng);
-          const projectTasks = store.tasks.filter((t) => t.projectId === project.id);
-          const hasHot = projectTasks.some((t) => t.priority === "critical" && (t.status === "in_progress" || t.status === "blocked"));
-          const hasUnconfirmed = projectTasks.some((t) => !t.orderConfirmed && t.status !== "completed");
+          const { x, y } = cityToXY(project.address.city, project.address.state, project.address.lat, project.address.lng);
           const overBudget = project.totalSpent > project.totalBudget && project.totalBudget > 0;
+          const projectTasks = store.tasks.filter((t) => t.projectId === project.id);
+          const hasUnconfirmed = projectTasks.some((t) => !t.orderConfirmed && t.status !== "completed");
 
-          const color = overBudget || hasHot ? "bg-red-500" : hasUnconfirmed ? "bg-amber-400" : "bg-emerald-400";
+          const color = overBudget ? "bg-red-500" : hasUnconfirmed ? "bg-amber-400" : "bg-emerald-400";
 
           return (
             <Link key={project.id} href={`/projects/${project.id}`}
               className="absolute group" style={{ left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)" }}>
-              {(hasHot || overBudget) && (
+              {overBudget && (
                 <span className="absolute inset-0 rounded-full bg-red-400 opacity-40 animate-ping"></span>
               )}
               <span className={cn("relative block w-4 h-4 rounded-full shadow-lg border-2 border-white cursor-pointer transition-transform group-hover:scale-150", color)}></span>
@@ -117,7 +116,6 @@ export function USAHeatmap() {
                 <strong>{project.name}</strong>
                 <span className="block text-slate-300">{project.address.city}, {project.address.state}</span>
                 {overBudget && <span className="block text-red-300">Over budget!</span>}
-                {hasHot && <span className="block text-red-300">Critical tasks</span>}
               </div>
             </Link>
           );
@@ -127,9 +125,37 @@ export function USAHeatmap() {
   );
 }
 
-function latLngToXY(lat: number, lng: number): { x: number; y: number } {
-  const minLat = 24.5, maxLat = 49.5, minLng = -125, maxLng = -66;
-  const x = ((lng - minLng) / (maxLng - minLng)) * 100;
-  const y = ((maxLat - lat) / (maxLat - minLat)) * 100;
+// Hand-tuned positions for known cities on this specific SVG map
+const CITY_COORDS: Record<string, { x: number; y: number }> = {
+  "Atlanta,GA":    { x: 64.1, y: 36.7 },
+  "Dallas,TX":     { x: 38.5, y: 42.5 },
+  "Phoenix,AZ":    { x: 15.1, y: 40.0 },
+  "Nashville,TN":  { x: 59.4, y: 32.2 },
+  "Charlotte,NC":  { x: 69.3, y: 30.3 },
+  "Tampa,FL":      { x: 61.5, y: 50.8 },
+  "Denver,CO":     { x: 30.2, y: 24.2 },
+  "Miami,FL":      { x: 65.6, y: 61.7 },
+  "Houston,TX":    { x: 40.0, y: 50.0 },
+  "Chicago,IL":    { x: 52.0, y: 18.0 },
+  "Los Angeles,CA":{ x: 10.0, y: 42.0 },
+  "New York,NY":   { x: 77.1, y: 14.0 },
+  "Seattle,WA":    { x: 13.0, y: 10.0 },
+  "Portland,OR":   { x: 12.0, y: 16.0 },
+  "Las Vegas,NV":  { x: 14.5, y: 33.0 },
+  "San Antonio,TX": { x: 36.0, y: 50.0 },
+  "Orlando,FL":    { x: 64.0, y: 53.0 },
+  "Jacksonville,FL":{ x: 64.5, y: 46.0 },
+  "Memphis,TN":    { x: 50.0, y: 34.0 },
+  "Birmingham,AL": { x: 57.0, y: 37.0 },
+  "Raleigh,NC":    { x: 72.0, y: 29.0 },
+  "Richmond,VA":   { x: 72.0, y: 25.0 },
+};
+
+function cityToXY(city: string, state: string, lat: number, lng: number): { x: number; y: number } {
+  const key = `${city},${state}`;
+  if (CITY_COORDS[key]) return CITY_COORDS[key];
+  // Fallback: linear projection calibrated to SVG
+  const x = 7.8 + ((lng + 125) / 59) * 76.6;
+  const y = 8.3 + ((49.5 - lat) / 25) * 54.2;
   return { x: Math.max(2, Math.min(98, x)), y: Math.max(2, Math.min(98, y)) };
 }
