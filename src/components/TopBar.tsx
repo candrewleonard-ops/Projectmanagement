@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown, FolderOpen, Bell, Search } from "lucide-react";
-import { folders } from "@/lib/mock-data";
+import { useStore } from "@/lib/store";
 
 export function TopBar() {
+  const store = useStore();
   const [folderOpen, setFolderOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -54,7 +55,7 @@ export function TopBar() {
           {folderOpen && (
             <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-xl py-2 z-50">
               <p className="px-4 py-1.5 text-[10px] font-semibold uppercase text-slate-400 tracking-wider">Switch Folder</p>
-              {folders.map((folder) => (
+              {store.folders.map((folder) => (
                 <Link
                   key={folder.id}
                   href={`/projects?folder=${folder.id}`}

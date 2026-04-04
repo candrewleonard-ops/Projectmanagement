@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft, Plus, Trash2, Send, ChevronDown, FileText, DollarSign,
 } from "lucide-react";
-import { contractors, projects } from "@/lib/mock-data";
+import { useStore } from "@/lib/store";
 import { SERVICE_CATALOG } from "@/lib/service-catalog";
 import { INVOICE_TERMS } from "@/lib/invoice-terms";
 import { formatCurrency, cn } from "@/lib/utils";
@@ -26,6 +26,7 @@ export default function CreateInvoicePage() {
 
 function CreateInvoiceContent() {
   const searchParams = useSearchParams();
+  const store = useStore();
   const preselectedContractor = searchParams.get("contractor") || "";
   const preselectedProject = searchParams.get("project") || "";
 
@@ -106,7 +107,7 @@ function CreateInvoiceContent() {
             className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm"
           >
             <option value="">Select contractor...</option>
-            {contractors.map((c) => (
+            {store.contractors.map((c) => (
               <option key={c.id} value={c.id}>{c.name} — {c.company}</option>
             ))}
           </select>
@@ -119,7 +120,7 @@ function CreateInvoiceContent() {
             className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm"
           >
             <option value="">Select project...</option>
-            {projects.filter((p) => p.status === "active").map((p) => (
+            {store.projects.filter((p) => p.status === "active").map((p) => (
               <option key={p.id} value={p.id}>{p.name} — {p.address.city}, {p.address.state}</option>
             ))}
           </select>

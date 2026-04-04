@@ -2,16 +2,18 @@
 
 import Link from "next/link";
 import { FileText, Plus } from "lucide-react";
-import { invoices, contractors, projects } from "@/lib/mock-data";
+import { useStore } from "@/lib/store";
 import { formatCurrency, formatDate, statusColor, cn } from "@/lib/utils";
 
 export default function InvoicesPage() {
+  const store = useStore();
+
   return (
     <div className="space-y-6 fade-in">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Invoices</h1>
-          <p className="text-sm text-slate-500 mt-1">{invoices.length} invoices</p>
+          <p className="text-sm text-slate-500 mt-1">{store.invoices.length} invoices</p>
         </div>
         <Link href="/invoices/create" className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
           <Plus size={16} /> Write Invoice
@@ -34,9 +36,9 @@ export default function InvoicesPage() {
             </tr>
           </thead>
           <tbody>
-            {invoices.map((inv) => {
-              const contractor = contractors.find((c) => c.id === inv.contractorId);
-              const project = projects.find((p) => p.id === inv.projectId);
+            {store.invoices.map((inv) => {
+              const contractor = store.getContractor(inv.contractorId);
+              const project = store.getProject(inv.projectId);
               return (
                 <tr key={inv.id} className="border-b border-slate-100 hover:bg-slate-50 transition">
                   <td className="py-3 px-4 font-medium text-slate-900">#{inv.id}</td>

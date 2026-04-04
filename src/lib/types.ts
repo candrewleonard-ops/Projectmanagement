@@ -75,6 +75,8 @@ export interface Project {
   contractorIds: string[];
   photos: ProjectPhoto[];
   renders: ThreeDRender[];
+  scopeOfWork: string;
+  scopeAttachmentName?: string;
   createdAt: string;
 }
 
@@ -107,6 +109,9 @@ export interface Contractor {
   company: string;
   email: string;
   phone: string;
+  city: string;
+  state: string;
+  zip: string;
   specialty: string[];
   rating: number; // 1-5
   avatarUrl?: string;

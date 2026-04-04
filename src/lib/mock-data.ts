@@ -6,21 +6,13 @@ import { INVOICE_TERMS } from "./invoice-terms";
 
 // ---- Current User ----
 export const currentUser: User = {
-  id: "u1",
-  name: "Chris Leonard",
-  email: "chris@flipcrm.io",
-  phone: "+15551234567",
-  role: "admin",
-  organizationId: "org1",
-  createdAt: "2025-06-01",
+  id: "u1", name: "Chris Leonard", email: "chris@flipcrm.io", phone: "+15551234567",
+  role: "admin", organizationId: "org1", createdAt: "2025-06-01",
 };
 
 export const organization: Organization = {
-  id: "org1",
-  name: "Leonard Property Group",
-  ownerUserId: "u1",
-  members: ["u1", "u2", "u3"],
-  createdAt: "2025-06-01",
+  id: "org1", name: "Leonard Property Group", ownerUserId: "u1",
+  members: ["u1", "u2", "u3"], createdAt: "2025-06-01",
 };
 
 export const users: User[] = [
@@ -44,7 +36,8 @@ export const projects: Project[] = [
     address: { street: "1423 Oakwood Dr", city: "Atlanta", state: "GA", zip: "30316", lat: 33.749, lng: -84.388 },
     purchasePrice: 185000, estimatedARV: 345000, totalBudget: 78000, totalSpent: 42300,
     startDate: "2026-01-15", estimatedEndDate: "2026-05-01",
-    contractorIds: ["c1", "c2", "c3"], photos: [
+    contractorIds: ["c1", "c2", "c3"],
+    photos: [
       { id: "ph1", url: "/photos/oakwood-before.jpg", caption: "Front exterior – before", uploadedAt: "2026-01-16", uploadedBy: "u1" },
       { id: "ph2", url: "/photos/oakwood-kitchen.jpg", caption: "Kitchen demo complete", uploadedAt: "2026-02-10", uploadedBy: "u2" },
     ],
@@ -52,6 +45,7 @@ export const projects: Project[] = [
       { id: "r1", label: "Post Trashout", url: "https://my.matterport.com/show/?m=example1", capturedAt: "2026-01-20" },
       { id: "r2", label: "50% Complete", url: "https://my.matterport.com/show/?m=example2", capturedAt: "2026-03-05" },
     ],
+    scopeOfWork: "Full gut rehab: demo, electrical rewire, HVAC replacement, kitchen remodel, LVP flooring throughout, interior paint, bathroom updates x2.",
     createdAt: "2026-01-10",
   },
   {
@@ -60,15 +54,14 @@ export const projects: Project[] = [
     purchasePrice: 210000, estimatedARV: 390000, totalBudget: 95000, totalSpent: 18750,
     startDate: "2026-02-20", estimatedEndDate: "2026-07-15",
     contractorIds: ["c2", "c4"], photos: [],
-    renders: [
-      { id: "r3", label: "Post Trashout", url: "https://my.matterport.com/show/?m=example3", capturedAt: "2026-02-25" },
-    ],
+    renders: [{ id: "r3", label: "Post Trashout", url: "https://my.matterport.com/show/?m=example3", capturedAt: "2026-02-25" }],
+    scopeOfWork: "Full interior demo, re-pipe PEX, roof replacement, new kitchen, 3 bath remodels, exterior paint.",
     createdAt: "2026-02-18",
   },
   {
     id: "p3", name: "Sunset Blvd Flip", folderId: "f1", status: "active",
     address: { street: "4501 Sunset Blvd", city: "Phoenix", state: "AZ", zip: "85004", lat: 33.4484, lng: -112.074 },
-    purchasePrice: 165000, estimatedARV: 295000, totalBudget: 62000, totalSpent: 55800,
+    purchasePrice: 165000, estimatedARV: 295000, totalBudget: 62000, totalSpent: 82000, // OVER BUDGET by $20k
     startDate: "2025-11-01", estimatedEndDate: "2026-04-10",
     contractorIds: ["c1", "c5"], photos: [],
     renders: [
@@ -76,6 +69,7 @@ export const projects: Project[] = [
       { id: "r5", label: "50% Complete", url: "https://my.matterport.com/show/?m=example5", capturedAt: "2026-01-15" },
       { id: "r6", label: "100% Complete", url: "https://my.matterport.com/show/?m=example6", capturedAt: "2026-03-28" },
     ],
+    scopeOfWork: "Full remodel with kitchen, 2 bath, flooring, paint, landscaping. Went over budget on kitchen and unexpected foundation work.",
     createdAt: "2025-10-28",
   },
   {
@@ -83,8 +77,8 @@ export const projects: Project[] = [
     address: { street: "88 River Rd", city: "Nashville", state: "TN", zip: "37203", lat: 36.1627, lng: -86.7816 },
     purchasePrice: 230000, estimatedARV: 415000, totalBudget: 85000, totalSpent: 5200,
     startDate: "2026-03-20", estimatedEndDate: "2026-08-30",
-    contractorIds: ["c3"], photos: [],
-    renders: [],
+    contractorIds: ["c3"], photos: [], renders: [],
+    scopeOfWork: "Trashout, inspection, then full scope TBD based on inspection results.",
     createdAt: "2026-03-18",
   },
   {
@@ -92,8 +86,8 @@ export const projects: Project[] = [
     address: { street: "320 Elm Ave", city: "Charlotte", state: "NC", zip: "28202", lat: 35.2271, lng: -80.8431 },
     purchasePrice: 0, estimatedARV: 310000, totalBudget: 0, totalSpent: 0,
     startDate: "", estimatedEndDate: "",
-    contractorIds: [], photos: [],
-    renders: [],
+    contractorIds: [], photos: [], renders: [],
+    scopeOfWork: "",
     createdAt: "2026-03-25",
   },
   {
@@ -101,8 +95,8 @@ export const projects: Project[] = [
     address: { street: "155 Birch Ln", city: "Tampa", state: "FL", zip: "33602", lat: 27.9506, lng: -82.4572 },
     purchasePrice: 195000, estimatedARV: 355000, totalBudget: 72000, totalSpent: 68400,
     startDate: "2025-05-01", estimatedEndDate: "2025-10-15", completedDate: "2025-10-10",
-    contractorIds: ["c1", "c2"], photos: [],
-    renders: [],
+    contractorIds: ["c1", "c2"], photos: [], renders: [],
+    scopeOfWork: "Kitchen remodel, 2 bath updates, flooring, paint, roof repair, landscaping.",
     createdAt: "2025-04-28",
   },
   {
@@ -110,8 +104,8 @@ export const projects: Project[] = [
     address: { street: "67 Pine Ct", city: "Denver", state: "CO", zip: "80202", lat: 39.7392, lng: -104.9903 },
     purchasePrice: 275000, estimatedARV: 480000, totalBudget: 110000, totalSpent: 104500,
     startDate: "2025-03-15", estimatedEndDate: "2025-09-01", completedDate: "2025-08-28",
-    contractorIds: ["c4", "c5"], photos: [],
-    renders: [],
+    contractorIds: ["c4", "c5"], photos: [], renders: [],
+    scopeOfWork: "Full luxury remodel: high-end kitchen, master suite, basement finish, new HVAC, landscaping.",
     createdAt: "2025-03-10",
   },
   {
@@ -119,32 +113,25 @@ export const projects: Project[] = [
     address: { street: "410 Willow Park Dr", city: "Miami", state: "FL", zip: "33101", lat: 25.7617, lng: -80.1918 },
     purchasePrice: 310000, estimatedARV: 520000, totalBudget: 105000, totalSpent: 32000,
     startDate: "2025-12-01", estimatedEndDate: "2026-06-01",
-    contractorIds: ["c1", "c3"], photos: [],
-    renders: [],
+    contractorIds: ["c1", "c3"], photos: [], renders: [],
+    scopeOfWork: "Full rehab on hold due to permitting issues. Demo and HVAC completed.",
     createdAt: "2025-11-28",
   },
 ];
 
 // ---- Tasks ----
 export const tasks: TaskItem[] = [
-  // Oakwood Revival (p1)
   { id: "t1", projectId: "p1", title: "Kitchen Cabinet Installation", description: "Install shaker-style cabinets", status: "in_progress", priority: "high", qualityCheck: "pending", assignedContractorId: "c1", scheduledDate: "2026-04-02", estimatedCost: 6500, actualCost: 6500, category: "Kitchen", orderConfirmed: true },
   { id: "t2", projectId: "p1", title: "Granite Countertop Install", description: "Measure, template, and install granite countertops", status: "scheduled", priority: "high", qualityCheck: "pending", assignedContractorId: "c1", scheduledDate: "2026-04-08", estimatedCost: 4500, actualCost: 0, category: "Kitchen", orderConfirmed: false },
   { id: "t3", projectId: "p1", title: "Full Electrical Rewire", description: "Rewire entire house to code", status: "completed", priority: "critical", qualityCheck: "passed", assignedContractorId: "c2", completedDate: "2026-02-28", estimatedCost: 12000, actualCost: 11800, category: "Electrical", orderConfirmed: true },
   { id: "t4", projectId: "p1", title: "HVAC System Replacement", description: "Remove old unit, install new 3-ton system", status: "completed", priority: "critical", qualityCheck: "passed", assignedContractorId: "c3", completedDate: "2026-03-15", estimatedCost: 5500, actualCost: 5500, category: "HVAC", orderConfirmed: true },
   { id: "t5", projectId: "p1", title: "Interior Paint – Full House", description: "Prep and paint all rooms, SW Agreeable Gray", status: "scheduled", priority: "medium", qualityCheck: "pending", assignedContractorId: "c1", scheduledDate: "2026-04-15", estimatedCost: 4200, actualCost: 0, category: "Painting", orderConfirmed: true },
   { id: "t6", projectId: "p1", title: "LVP Flooring Install", description: "Install luxury vinyl plank throughout", status: "blocked", priority: "critical", qualityCheck: "pending", assignedContractorId: "c1", scheduledDate: "2026-04-05", estimatedCost: 7200, actualCost: 0, category: "Flooring", orderConfirmed: false },
-
-  // Maple Street (p2)
   { id: "t7", projectId: "p2", title: "Full Interior Demo", description: "Gut interior to studs", status: "completed", priority: "high", qualityCheck: "passed", assignedContractorId: "c4", completedDate: "2026-03-05", estimatedCost: 5000, actualCost: 4800, category: "Demolition", orderConfirmed: true },
   { id: "t8", projectId: "p2", title: "Plumbing Re-Pipe (PEX)", description: "Replace all supply lines with PEX", status: "in_progress", priority: "critical", qualityCheck: "pending", assignedContractorId: "c2", scheduledDate: "2026-03-28", estimatedCost: 5500, actualCost: 0, category: "Plumbing", orderConfirmed: true },
   { id: "t9", projectId: "p2", title: "Roof Replacement", description: "30-year architectural shingles", status: "scheduled", priority: "high", qualityCheck: "pending", scheduledDate: "2026-04-20", estimatedCost: 9500, actualCost: 0, category: "Roofing", orderConfirmed: false },
-
-  // Sunset Blvd (p3)
   { id: "t10", projectId: "p3", title: "Final Punch List", description: "Address all remaining items", status: "in_progress", priority: "high", qualityCheck: "pending", assignedContractorId: "c5", scheduledDate: "2026-04-02", estimatedCost: 1500, actualCost: 0, category: "General", orderConfirmed: true },
   { id: "t11", projectId: "p3", title: "Exterior Paint Touch-Up", description: "Touch up all exterior trim", status: "scheduled", priority: "medium", qualityCheck: "pending", assignedContractorId: "c5", scheduledDate: "2026-04-05", estimatedCost: 800, actualCost: 0, category: "Painting", orderConfirmed: true },
-
-  // Riverside Cottage (p4)
   { id: "t12", projectId: "p4", title: "Trashout & Junk Removal", description: "Clear all debris from property", status: "in_progress", priority: "critical", qualityCheck: "pending", assignedContractorId: "c3", scheduledDate: "2026-04-01", estimatedCost: 2500, actualCost: 0, category: "Demolition", orderConfirmed: true },
   { id: "t13", projectId: "p4", title: "Property Inspection", description: "Full inspection report", status: "scheduled", priority: "high", qualityCheck: "pending", scheduledDate: "2026-04-10", estimatedCost: 450, actualCost: 0, category: "General", orderConfirmed: false },
 ];
@@ -153,26 +140,31 @@ export const tasks: TaskItem[] = [
 export const contractors: Contractor[] = [
   {
     id: "c1", name: "Mike Torres", company: "Torres General Contracting", email: "mike@torrescontracting.com", phone: "+15551001001",
-    specialty: ["Kitchen", "Flooring", "Painting", "General"], rating: 4.8, projectIds: ["p1", "p3", "p6", "p8"],
+    city: "Atlanta", state: "GA", zip: "30312",
+    specialty: ["Kitchen", "Flooring", "Painting", "General", "Framing"], rating: 4.8, projectIds: ["p1", "p3", "p6", "p8"],
     totalJobsCompleted: 34, notes: "Reliable GC. Prefers 2-week lead time for material orders.",
   },
   {
     id: "c2", name: "Angela Washington", company: "Sparks Electrical & Plumbing", email: "angela@sparksep.com", phone: "+15551002002",
+    city: "Dallas", state: "TX", zip: "75202",
     specialty: ["Electrical", "Plumbing"], rating: 4.9, projectIds: ["p1", "p2", "p6"],
     totalJobsCompleted: 28, notes: "Licensed Master Electrician & Plumber. Excellent code compliance record.",
   },
   {
     id: "c3", name: "Dave Kowalski", company: "Kowalski HVAC & Demo", email: "dave@kowalskihvac.com", phone: "+15551003003",
+    city: "Nashville", state: "TN", zip: "37201",
     specialty: ["HVAC", "Demolition"], rating: 4.5, projectIds: ["p1", "p4", "p8"],
     totalJobsCompleted: 19, notes: "Strong demo crew. HVAC installs run clean.",
   },
   {
     id: "c4", name: "Rosa Hernandez", company: "Hernandez Roofing & Exteriors", email: "rosa@hernandezroofing.com", phone: "+15551004004",
-    specialty: ["Roofing", "Exterior", "Demolition"], rating: 4.6, projectIds: ["p2", "p7"],
+    city: "Dallas", state: "TX", zip: "75204",
+    specialty: ["Roofing", "Exterior", "Demolition", "Framing"], rating: 4.6, projectIds: ["p2", "p7"],
     totalJobsCompleted: 22, notes: "Family-owned. Very competitive pricing on roofing.",
   },
   {
     id: "c5", name: "Tyler Banks", company: "Banks Finish Works", email: "tyler@banksfinish.com", phone: "+15551005005",
+    city: "Phoenix", state: "AZ", zip: "85003",
     specialty: ["Bathroom", "Kitchen", "Painting", "General"], rating: 4.7, projectIds: ["p3", "p7"],
     totalJobsCompleted: 15, notes: "Detail-oriented finish carpenter. Great for punch list and final touches.",
   },
@@ -189,27 +181,24 @@ export const expenses: ExpenseItem[] = [
   { id: "e7", projectId: "p2", description: "Dumpster Rental (2 weeks)", category: "Demolition", unitPrice: 550, quantity: 2, total: 1100, vendor: "WM", purchasedDate: "2026-02-28" },
   { id: "e8", projectId: "p3", description: "Full Kitchen Remodel Package", category: "Kitchen", unitPrice: 25000, quantity: 1, total: 25000, vendor: "IKEA Pro Services", purchasedDate: "2025-12-15" },
   { id: "e9", projectId: "p3", description: "Bathroom Vanities x3", category: "Bathroom", unitPrice: 650, quantity: 3, total: 1950, vendor: "Wayfair Pro", purchasedDate: "2026-01-10" },
-  { id: "e10", projectId: "p4", description: "Junk Removal Service", category: "Demolition", unitPrice: 2500, quantity: 1, total: 2500, vendor: "1-800-GOT-JUNK", purchasedDate: "2026-03-28" },
-  { id: "e11", projectId: "p6", description: "Roof Replacement (Shingle)", category: "Roofing", unitPrice: 9500, quantity: 1, total: 9500, vendor: "Hernandez Roofing", purchasedDate: "2025-07-20" },
-  { id: "e12", projectId: "p7", description: "Quartz Countertops", category: "Kitchen", unitPrice: 5500, quantity: 1, total: 5500, vendor: "MSI Surfaces", purchasedDate: "2025-06-15" },
+  { id: "e10", projectId: "p3", description: "Foundation Repair (unexpected)", category: "General", unitPrice: 18000, quantity: 1, total: 18000, vendor: "Foundation Pros AZ", purchasedDate: "2026-02-05" },
+  { id: "e11", projectId: "p4", description: "Junk Removal Service", category: "Demolition", unitPrice: 2500, quantity: 1, total: 2500, vendor: "1-800-GOT-JUNK", purchasedDate: "2026-03-28" },
+  { id: "e12", projectId: "p6", description: "Roof Replacement (Shingle)", category: "Roofing", unitPrice: 9500, quantity: 1, total: 9500, vendor: "Hernandez Roofing", purchasedDate: "2025-07-20" },
+  { id: "e13", projectId: "p7", description: "Quartz Countertops", category: "Kitchen", unitPrice: 5500, quantity: 1, total: 5500, vendor: "MSI Surfaces", purchasedDate: "2025-06-15" },
 ];
 
 // ---- Invoices ----
 export const invoices: Invoice[] = [
   {
     id: "inv1", projectId: "p1", contractorId: "c2", status: "paid",
-    lineItems: [
-      { id: "li1", description: "Full Electrical Rewire", category: "Electrical", subcategory: "Rewire", unitPrice: 12000, quantity: 1, total: 12000 },
-    ],
+    lineItems: [{ id: "li1", description: "Full Electrical Rewire", category: "Electrical", subcategory: "Rewire", unitPrice: 12000, quantity: 1, total: 12000 }],
     subtotal: 12000, depositAmount: 3000, midpointAmount: 3000, completionAmount: 6000,
     depositPaid: true, midpointPaid: true, completionPaid: true,
     terms: INVOICE_TERMS, createdAt: "2026-02-01", sentAt: "2026-02-01",
   },
   {
     id: "inv2", projectId: "p1", contractorId: "c3", status: "approved",
-    lineItems: [
-      { id: "li2", description: "Full AC System Installation", category: "HVAC", subcategory: "Installation", unitPrice: 5500, quantity: 1, total: 5500 },
-    ],
+    lineItems: [{ id: "li2", description: "Full AC System Installation", category: "HVAC", subcategory: "Installation", unitPrice: 5500, quantity: 1, total: 5500 }],
     subtotal: 5500, depositAmount: 1375, midpointAmount: 1375, completionAmount: 2750,
     depositPaid: true, midpointPaid: true, completionPaid: false,
     terms: INVOICE_TERMS, createdAt: "2026-02-28", sentAt: "2026-03-01",
@@ -230,28 +219,7 @@ export const communications: Communication[] = [
   { id: "comm10", projectId: "p1", contractorId: "c1", type: "note", direction: "outbound", content: "Mike mentioned he has a flooring subcontractor who can do the LVP at $5.50/sqft installed. Worth considering.", timestamp: "2026-03-29T16:00:00Z", read: true },
 ];
 
-// ---- Heatmap Points ----
-export const heatmapPoints: HeatmapPoint[] = projects
-  .filter((p) => p.status === "active" || p.status === "on_hold")
-  .map((p) => {
-    const projectTasks = tasks.filter((t) => t.projectId === p.id);
-    const hasHot = projectTasks.some(
-      (t) => t.priority === "critical" && (t.status === "in_progress" || t.status === "blocked")
-    );
-    const hasUnconfirmed = projectTasks.some((t) => !t.orderConfirmed && t.status !== "completed");
-    return {
-      id: `hp-${p.id}`,
-      projectId: p.id,
-      lat: p.address.lat,
-      lng: p.address.lng,
-      intensity: hasHot ? 1 : hasUnconfirmed ? 0.6 : 0.2,
-      hasHotTasks: hasHot,
-      hasUnconfirmedOrders: hasUnconfirmed,
-      label: `${p.name} – ${p.address.city}, ${p.address.state}`,
-    };
-  });
-
-// ---- Helper Functions ----
+// ---- Helper Functions (kept for backward compat) ----
 export function getProject(id: string) { return projects.find((p) => p.id === id); }
 export function getContractor(id: string) { return contractors.find((c) => c.id === id); }
 export function getProjectTasks(projectId: string) { return tasks.filter((t) => t.projectId === projectId); }

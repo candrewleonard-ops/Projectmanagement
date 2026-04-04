@@ -5,7 +5,7 @@ import {
   Shield, UserPlus, Users, Settings, Building2,
   Mail, Phone, Crown, Eye, Wrench, Trash2, Edit3,
 } from "lucide-react";
-import { users, organization, currentUser } from "@/lib/mock-data";
+import { useStore } from "@/lib/store";
 import { cn, formatDate } from "@/lib/utils";
 import { UserRole } from "@/lib/types";
 
@@ -16,6 +16,7 @@ const roleConfig: Record<UserRole, { label: string; icon: typeof Shield; color: 
 };
 
 export default function AdminPage() {
+  const store = useStore();
   const [showAddUser, setShowAddUser] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
@@ -44,8 +45,8 @@ export default function AdminPage() {
             <Building2 size={28} className="text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900">{organization.name}</h2>
-            <p className="text-sm text-slate-500">{organization.members.length} members &middot; Created {formatDate(organization.createdAt)}</p>
+            <h2 className="text-xl font-bold text-slate-900">{store.organization.name}</h2>
+            <p className="text-sm text-slate-500">{store.organization.members.length} members &middot; Created {formatDate(store.organization.createdAt)}</p>
           </div>
         </div>
       </div>
@@ -79,9 +80,9 @@ export default function AdminPage() {
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => {
+            {store.users.map((user) => {
               const role = roleConfig[user.role];
-              const isCurrentUser = user.id === currentUser.id;
+              const isCurrentUser = user.id === store.currentUser.id;
               return (
                 <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50 transition">
                   <td className="py-3 px-4">
