@@ -9,9 +9,10 @@
   "scripts": {
     "start": "electron .",
     "build:next": "cd .. && cross-env DESKTOP_BUILD=true next build && node desktop-mac/copy-standalone.js",
-    "build:mac": "npm run build:next && electron-builder --mac --x64",
-    "build:mac-arm": "npm run build:next && electron-builder --mac --arm64",
-    "build:mac-universal": "npm run build:next && electron-builder --mac --universal",
+    "build:mac": "npm run build:next && electron-builder --mac zip --x64",
+    "build:mac-arm": "npm run build:next && electron-builder --mac zip --arm64",
+    "build:mac-universal": "npm run build:next && electron-builder --mac zip --x64 --arm64",
+    "build:dmg": "npm run build:next && electron-builder --mac dmg --x64",
     "dev": "cross-env ELECTRON_DEV=true electron ."
   },
   "devDependencies": {
@@ -39,11 +40,11 @@
     "mac": {
       "target": [
         {
-          "target": "dmg",
+          "target": "zip",
           "arch": ["x64", "arm64"]
         }
       ],
-      "artifactName": "FlipCRM-${version}-mac.${ext}",
+      "artifactName": "FlipCRM-${version}-mac-${arch}.${ext}",
       "category": "public.app-category.business",
       "icon": null
     },
