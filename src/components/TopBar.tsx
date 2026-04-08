@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown, FolderOpen, Bell, Search } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { BrowserNav } from "./BrowserNav";
 
 export function TopBar() {
   const store = useStore();
@@ -12,8 +13,9 @@ export function TopBar() {
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-20">
-      {/* Search */}
+      {/* Browser Nav + Search */}
       <div className="flex items-center gap-3 flex-1">
+        <BrowserNav />
         {searchOpen ? (
           <div className="relative w-96">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />

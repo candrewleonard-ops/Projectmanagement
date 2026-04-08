@@ -182,6 +182,7 @@ export interface Communication {
   duration?: number; // seconds for calls
   read: boolean;
   scheduledFor?: string;
+  notes?: string;
 }
 
 // ---- Service Catalog ----

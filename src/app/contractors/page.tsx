@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Plus, Phone, MessageSquare, Mail, Star, Search, ChevronDown, X, Send, Clock } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cn, formatRelativeTime } from "@/lib/utils";
@@ -19,6 +20,7 @@ export default function ContractorsPage() {
   const [scheduleAmPm, setScheduleAmPm] = useState<"AM" | "PM">("AM");
   const [showSchedule, setShowSchedule] = useState(false);
   const [showAddContractor, setShowAddContractor] = useState(false);
+  const router = useRouter();
 
   // Get unique states
   const states = useMemo(() => {
@@ -117,14 +119,14 @@ export default function ContractorsPage() {
 
               return (
                 <React.Fragment key={c.id}>
-                  <tr className={cn("border-b border-slate-100 hover:bg-slate-50 transition cursor-pointer", isExpanded && "bg-blue-50/50")} onClick={() => setExpandedId(isExpanded ? null : c.id)}>
+                  <tr className={cn("border-b border-slate-100 hover:bg-blue-50/40 transition cursor-pointer", isExpanded && "bg-blue-50/50")} onClick={() => router.push(`/contractors/${c.id}`)}>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                           {c.name.split(" ").map((n) => n[0]).join("")}
                         </div>
                         <div>
-                          <Link href={`/contractors/${c.id}`} className="font-medium text-blue-600 hover:text-blue-700" onClick={(e) => e.stopPropagation()}>{c.name}</Link>
+                          <span className="font-medium text-blue-600">{c.name}</span>
                           <p className="text-xs text-slate-400">{c.company}</p>
                         </div>
                       </div>

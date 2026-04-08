@@ -166,14 +166,14 @@ export default function ProjectDetailPage() {
             <h3 className="text-sm font-semibold text-slate-700 mb-4">Assigned Contractors</h3>
             <div className="space-y-2">
               {projectContractors.map((c) => (
-                <div key={c.id} className="stat-card">
+                <div key={c.id} className="stat-card cursor-pointer hover:border-blue-200 hover:shadow-md transition" onClick={() => router.push(`/contractors/${c.id}`)}>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white font-bold text-sm">{c.name.split(" ").map((n) => n[0]).join("")}</div>
                     <div className="flex-1">
-                      <Link href={`/contractors/${c.id}`} className="font-medium text-slate-900 hover:text-blue-600">{c.name}</Link>
+                      <span className="font-medium text-slate-900 group-hover:text-blue-600">{c.name}</span>
                       <p className="text-xs text-slate-400">{c.company} &middot; {c.phone}</p>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                       <button onClick={() => { setComposeFor(c.id); setComposeType("sms"); }} className="p-2 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600"><MessageSquare size={14} /></button>
                       <button onClick={() => { setComposeFor(c.id); setComposeType("call"); }} className="p-2 rounded-lg hover:bg-emerald-50 text-slate-400 hover:text-emerald-600"><Phone size={14} /></button>
                       <Link href={`/invoices/create?contractor=${c.id}&project=${project.id}`} className="p-2 rounded-lg hover:bg-violet-50 text-slate-400 hover:text-violet-600"><FileText size={14} /></Link>

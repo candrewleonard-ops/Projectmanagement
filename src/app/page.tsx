@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { formatCurrency, progressPercent, cn } from "@/lib/utils";
-import { USAHeatmap } from "@/components/USAHeatmap";
 import { BudgetChart } from "@/components/BudgetChart";
 
 export default function Dashboard() {
@@ -36,13 +35,44 @@ export default function Dashboard() {
         <StatCard icon={<AlertTriangle size={20} />} label="Hot Tasks Today" value={hotTasks.length.toString()} sub={`${completedTasks} completed, ${scheduledTasks} scheduled`} color="red" pulse={hotTasks.length > 0} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 stat-card">
-          <h2 className="text-lg font-semibold text-slate-900 mb-2">Property Heatmap</h2>
-          <USAHeatmap />
+      {/* Active Project Bubbles */}
+      <div className="stat-card">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-slate-900">Active Projects</h2>
+          <Link href="/projects" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">View All <ArrowRight size={14} /></Link>
         </div>
+        <div className="flex flex-wrap gap-3">
+          {activeProjects.map((project) => {
+            const pTasks = store.getProjectTasks(project.id);
+            const completed = pTasks.filter((t) => t.status === "completed").length;
+            const overBudget = project.totalSpent > project.totalBudget && project.totalBudget > 0;
+            const hasUnconfirmed = pTasks.some((t) => !t.orderConfirmed && t.status !== "completed");
+            const hasBlocked = pTasks.some((t) => t.status === "blocked");
+            const statusColor = overBudget ? "bg-red-500" : hasBlocked ? "bg-amber-500" : hasUnconfirmed ? "bg-amber-400" : "bg-emerald-500";
+            const ringColor = overBudget ? "ring-red-200" : hasBlocked ? "ring-amber-200" : "ring-transparent";
 
-        <div className="space-y-4">
+            return (
+              <Link key={project.id} href={`/projects/${project.id}`}
+                className={cn("flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition group", overBudget && "border-red-200 bg-red-50/50")}
+              >
+                <div className="relative">
+                  <span className={cn("block w-4 h-4 rounded-full", statusColor)}></span>
+                  {overBudget && <span className="absolute inset-0 rounded-full bg-red-400 opacity-40 animate-ping"></span>}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-900 group-hover:text-blue-600 transition">{project.name}</p>
+                  <p className="text-xs text-slate-400">{project.address.city}, {project.address.state} &middot; {completed}/{pTasks.length} tasks</p>
+                </div>
+                {overBudget && <span className="text-[10px] font-semibold text-red-600 bg-red-100 px-2 py-0.5 rounded-full ml-1">OVER BUDGET</span>}
+              </Link>
+            );
+          })}
+          {activeProjects.length === 0 && <p className="text-sm text-slate-400">No active projects.</p>}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-4">
           <div className="stat-card">
             <h3 className="text-sm font-semibold text-slate-700 mb-3">Task Overview</h3>
             <div className="space-y-2.5">
@@ -69,6 +99,10 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
+        </div>
+
+        <div className="space-y-4">
+          {/* Right column placeholder for future widgets */}
         </div>
       </div>
 
