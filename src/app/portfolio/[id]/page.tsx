@@ -115,7 +115,7 @@ function RentalView({ investment }: { investment: RentalProperty }) {
       </div>
 
       {activeTab === "overview" && <OverviewTab investment={investment} />}
-      {activeTab === "lease" && <TabPlaceholder label="Lease Agreement" />}
+      {activeTab === "lease" && <LeaseAgreementTab investment={investment} />}
       {activeTab === "vital" && <TabPlaceholder label="Vital Information" />}
       {activeTab === "workorders" && <TabPlaceholder label="Work Orders" />}
       {activeTab === "property" && <TabPlaceholder label="Property Information" />}
@@ -304,6 +304,130 @@ function OverviewTab({ investment }: { investment: RentalProperty }) {
           <ExpenseLine label="Total Expenses" value={totalExpenses} color="text-red-600" bold />
         </div>
       </div>
+    </div>
+  );
+}
+
+function LeaseAgreementTab({ investment }: { investment: RentalProperty }) {
+  const store = useStore();
+  const update = (patch: Partial<RentalProperty>) => store.updateInvestment(investment.id, patch);
+
+  const utilities: { key: keyof Pick<RentalProperty, "gas" | "electric" | "sewer" | "water" | "trash">; label: string }[] = [
+    { key: "gas", label: "Gas" },
+    { key: "electric", label: "Electric" },
+    { key: "sewer", label: "Sewer" },
+    { key: "water", label: "Water" },
+    { key: "trash", label: "Trash" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="stat-card">
+        <h3 className="text-lg font-semibold text-slate-900 mb-1">Lease Agreement</h3>
+        <p className="text-xs text-slate-500 mb-5">Template with all the info a landlord needs to track for this tenancy.</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* 1. Rent */}
+          <FormRow number={1} label="Monthly Rent">
+            <CurrencyInput value={investment.monthlyRent} onChange={(v) => update({ monthlyRent: v })} placeholder="1500" />
+          </FormRow>
+
+          {/* 2. Deposit Amount */}
+          <FormRow number={2} label="Security Deposit">
+            <CurrencyInput value={investment.depositAmount} onChange={(v) => update({ depositAmount: v })} placeholder="1500" />
+          </FormRow>
+
+          {/* 3. Lease Start Date */}
+          <FormRow number={3} label="Lease Start Date">
+            <input type="date" value={investment.leaseStartDate} onChange={(e) => update({ leaseStartDate: e.target.value })}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+          </FormRow>
+
+          {/* 7. Lease End Date */}
+          <FormRow number={7} label="Lease End Date">
+            <input type="date" value={investment.leaseEndDate} onChange={(e) => update({ leaseEndDate: e.target.value })}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+          </FormRow>
+
+          {/* 4. Tenant Names */}
+          <FormRow number={4} label="Tenant Name(s)" fullWidth>
+            <input type="text" value={investment.tenantNames} onChange={(e) => update({ tenantNames: e.target.value })}
+              placeholder="John Smith, Jane Smith"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+          </FormRow>
+
+          {/* 5. Number of Occupants */}
+          <FormRow number={5} label="Number of Occupants">
+            <input type="number" min={0} value={investment.numberOfOccupants || ""} onChange={(e) => update({ numberOfOccupants: parseInt(e.target.value) || 0 })}
+              placeholder="3"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+          </FormRow>
+
+          {/* 8. Tenant Contact Info */}
+          <FormRow number={8} label="Tenant Contact Info" fullWidth>
+            <textarea value={investment.tenantContactInfo} onChange={(e) => update({ tenantContactInfo: e.target.value })}
+              placeholder="Phone: 555-123-4567&#10;Email: john@example.com"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm h-20 resize-none" />
+          </FormRow>
+
+          {/* 9. Property Manager Contact Info */}
+          <FormRow number={9} label="Property Manager Contact" fullWidth>
+            <textarea value={investment.propertyManagerContact} onChange={(e) => update({ propertyManagerContact: e.target.value })}
+              placeholder="Name, phone, email, company"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm h-20 resize-none" />
+          </FormRow>
+        </div>
+      </div>
+
+      {/* 6. Who pays utilities */}
+      <div className="stat-card">
+        <div className="flex items-center gap-3 mb-3">
+          <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">6</span>
+          <h3 className="text-sm font-semibold text-slate-700">Who Pays Utilities</h3>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {utilities.map((u) => (
+            <div key={u.key} className="p-3 rounded-lg border border-slate-200 bg-slate-50">
+              <p className="text-xs text-slate-500 mb-2">{u.label}</p>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" checked={investment[u.key].tenantPays}
+                  onChange={(e) => update({ [u.key]: { ...investment[u.key], tenantPays: e.target.checked } } as Partial<RentalProperty>)}
+                  className="w-4 h-4 rounded text-emerald-600" />
+                <span className={cn("font-medium", investment[u.key].tenantPays ? "text-emerald-700" : "text-slate-500")}>
+                  {investment[u.key].tenantPays ? "Tenant" : "Landlord"}
+                </span>
+              </label>
+              {!investment[u.key].tenantPays && investment[u.key].monthlyCost > 0 && (
+                <p className="text-xs text-slate-400 mt-1">${investment[u.key].monthlyCost}/mo</p>
+              )}
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-slate-400 mt-3">Manage utility costs on the Overview tab.</p>
+      </div>
+    </div>
+  );
+}
+
+function FormRow({ number, label, children, fullWidth }: { number: number; label: string; children: React.ReactNode; fullWidth?: boolean }) {
+  return (
+    <div className={cn(fullWidth && "md:col-span-2")}>
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold flex items-center justify-center">{number}</span>
+        <label className="text-sm font-medium text-slate-700">{label}</label>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function CurrencyInput({ value, onChange, placeholder }: { value: number; onChange: (v: number) => void; placeholder?: string }) {
+  return (
+    <div className="relative">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+      <input type="number" value={value || ""} placeholder={placeholder || "0"}
+        onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+        className="w-full border border-slate-300 rounded-lg pl-7 pr-3 py-2 text-sm font-medium" />
     </div>
   );
 }
