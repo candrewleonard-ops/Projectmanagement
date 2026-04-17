@@ -123,14 +123,6 @@ function RentalView({ investment }: { investment: RentalProperty }) {
   );
 }
 
-function TabPlaceholder({ label }: { label: string }) {
-  return (
-    <div className="stat-card flex flex-col items-center py-12">
-      <p className="text-sm text-slate-400">{label} coming next.</p>
-    </div>
-  );
-}
-
 function OverviewTab({ investment }: { investment: RentalProperty }) {
   const store = useStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
