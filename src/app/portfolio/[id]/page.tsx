@@ -709,10 +709,131 @@ function ExpenseLine({ label, value, color, bold }: { label: string; value: numb
 }
 
 function NoteView({ investment }: { investment: NoteInvestment }) {
+  const store = useStore();
+  const update = (patch: Partial<NoteInvestment>) => store.updateInvestment(investment.id, patch);
+
+  // Total profit = monthly payment × months in term - principal
+  const months = (investment.dateLent && investment.dateDue)
+    ? Math.max(0, Math.round((new Date(investment.dateDue).getTime() - new Date(investment.dateLent).getTime()) / (1000 * 60 * 60 * 24 * 30)))
+    : 0;
+  const totalPayments = investment.monthlyPaymentAmount * months;
+  const totalProfit = totalPayments - investment.loanAmount;
+  const years = months / 12;
+
+  // Interest earned (for sanity display): principal × rate × years
+  const interestEarned = investment.loanAmount * (investment.annualInterestRate / 100) * years;
+
+  const fields: { label: string; value: React.ReactNode }[] = [
+    { label: "Borrower Name", value: (
+      <input type="text" value={investment.borrowerName}
+        onChange={(e) => update({ borrowerName: e.target.value })}
+        placeholder="John Smith"
+        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+    )},
+    { label: "Loan Amount", value: (
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+        <input type="number" value={investment.loanAmount || ""}
+          onChange={(e) => update({ loanAmount: parseFloat(e.target.value) || 0 })}
+          placeholder="150000"
+          className="w-full border border-slate-300 rounded-lg pl-7 pr-3 py-2 text-sm font-medium" />
+      </div>
+    )},
+    { label: "Date Lent", value: (
+      <input type="date" value={investment.dateLent}
+        onChange={(e) => update({ dateLent: e.target.value })}
+        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+    )},
+    { label: "Date Due", value: (
+      <input type="date" value={investment.dateDue}
+        onChange={(e) => update({ dateDue: e.target.value })}
+        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+    )},
+    { label: "Monthly Payment Date", value: (
+      <input type="text" value={investment.monthlyPaymentDate}
+        onChange={(e) => update({ monthlyPaymentDate: e.target.value })}
+        placeholder="e.g. 1st of month"
+        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+    )},
+    { label: "Monthly Payment Amount", value: (
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+        <input type="number" value={investment.monthlyPaymentAmount || ""}
+          onChange={(e) => update({ monthlyPaymentAmount: parseFloat(e.target.value) || 0 })}
+          placeholder="1500"
+          className="w-full border border-slate-300 rounded-lg pl-7 pr-3 py-2 text-sm font-medium" />
+      </div>
+    )},
+    { label: "Annual Interest Rate", value: (
+      <div className="relative">
+        <input type="number" step="0.01" value={investment.annualInterestRate || ""}
+          onChange={(e) => update({ annualInterestRate: parseFloat(e.target.value) || 0 })}
+          placeholder="8.5"
+          className="w-full border border-slate-300 rounded-lg pl-3 pr-8 py-2 text-sm font-medium" />
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
+      </div>
+    )},
+    { label: "Collateral (Property Address)", value: (
+      <input type="text" value={investment.collateral}
+        onChange={(e) => update({ collateral: e.target.value })}
+        placeholder="456 Elm St, Atlanta, GA 30316"
+        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+    )},
+  ];
+
   return (
-    <div className="stat-card flex flex-col items-center py-12">
-      <FileText size={48} className="text-slate-300 mb-3" />
-      <p className="text-sm text-slate-400">Note investment view coming next.</p>
+    <div className="space-y-6">
+      <div className="stat-card">
+        <h3 className="text-lg font-semibold text-slate-900 mb-1">Note Details</h3>
+        <p className="text-xs text-slate-500 mb-5">Loan / note investment information.</p>
+
+        <div className="divide-y divide-slate-100">
+          {fields.map((f, i) => (
+            <div key={i} className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-3 sm:gap-6 py-3 items-center">
+              <label className="text-sm font-medium text-slate-600">{f.label}:</label>
+              <div>{f.value}</div>
+            </div>
+          ))}
+
+          {/* Calculated Total Profit */}
+          <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-3 sm:gap-6 py-4 items-center bg-emerald-50/40 -mx-5 px-5 rounded-lg mt-2">
+            <label className="text-sm font-semibold text-slate-700">Total Profit:</label>
+            <div>
+              <span className={cn("text-2xl font-bold", totalProfit >= 0 ? "text-emerald-600" : "text-red-600")}>
+                {formatCurrency(totalProfit)}
+              </span>
+              <span className="text-xs text-slate-500 ml-3">
+                (auto-calculated: {months} month{months === 1 ? "" : "s"} &times; {formatCurrency(investment.monthlyPaymentAmount)} &minus; {formatCurrency(investment.loanAmount)})
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Summary stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="stat-card">
+          <p className="text-xs text-slate-400 mb-1">Loan Term</p>
+          <p className="text-lg font-bold text-slate-900">{months} mo</p>
+          <p className="text-xs text-slate-400">{years.toFixed(1)} years</p>
+        </div>
+        <div className="stat-card">
+          <p className="text-xs text-slate-400 mb-1">Total Payments</p>
+          <p className="text-lg font-bold text-slate-900">{formatCurrency(totalPayments)}</p>
+          <p className="text-xs text-slate-400">over loan term</p>
+        </div>
+        <div className="stat-card">
+          <p className="text-xs text-slate-400 mb-1">Interest @ Rate</p>
+          <p className="text-lg font-bold text-blue-700">{formatCurrency(interestEarned)}</p>
+          <p className="text-xs text-slate-400">{investment.annualInterestRate}% × {years.toFixed(1)}y</p>
+        </div>
+        <div className="stat-card bg-emerald-50/40">
+          <p className="text-xs text-slate-400 mb-1">Net Profit</p>
+          <p className={cn("text-lg font-bold", totalProfit >= 0 ? "text-emerald-600" : "text-red-600")}>{formatCurrency(totalProfit)}</p>
+          <p className="text-xs text-slate-400">payments − principal</p>
+        </div>
+      </div>
     </div>
   );
 }
+
