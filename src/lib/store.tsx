@@ -112,7 +112,11 @@ function loadState(): StoreState {
   if (typeof window === "undefined") return getDefaultState();
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Merge with defaults so newly-added fields (e.g. investments) are never undefined
+      return { ...getDefaultState(), ...parsed };
+    }
   } catch {}
   return getDefaultState();
 }
@@ -247,18 +251,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return { ...s, vitalInfos: [...s.vitalInfos, { projectId, electricCompany: "", electricAccount: "", waterCompany: "", waterAccount: "", gasCompany: "", gasAccount: "", keyLocation: "", notes: "", ...updates }] };
     }),
     // Investments
-    addInvestment: (inv) => update((s) => ({ ...s, investments: [...s.investments, inv] })),
+    addInvestment: (inv) => update((s) => ({ ...s, investments: [...(s.investments ?? []), inv] })),
     updateInvestment: (id, u) => update((s) => ({
       ...s,
-      investments: s.investments.map((inv) => inv.id === id ? { ...inv, ...u } as Investment : inv),
+      investments: (s.investments ?? []).map((inv) => inv.id === id ? { ...inv, ...u } as Investment : inv),
     })),
     deleteInvestment: (id) => update((s) => ({
       ...s,
-      investments: s.investments.filter((inv) => inv.id !== id),
+      investments: (s.investments ?? []).filter((inv) => inv.id !== id),
     })),
-    getInvestment: (id) => state.investments.find((inv) => inv.id === id),
-    getRentalProperties: () => state.investments.filter((inv): inv is RentalProperty => inv.type === "rental"),
-    getNoteInvestments: () => state.investments.filter((inv): inv is NoteInvestment => inv.type === "note"),
+    getInvestment: (id) => (state.investments ?? []).find((inv) => inv.id === id),
+    getRentalProperties: () => (state.investments ?? []).filter((inv): inv is RentalProperty => inv.type === "rental"),
+    getNoteInvestments: () => (state.investments ?? []).filter((inv): inv is NoteInvestment => inv.type === "note"),
     addWorkOrder: (investmentId, wo) => update((s) => ({
       ...s,
       investments: s.investments.map((inv) =>
