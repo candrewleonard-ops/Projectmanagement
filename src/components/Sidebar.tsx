@@ -9,7 +9,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const nav = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/", label: "Project Manager", icon: LayoutDashboard },
   { href: "/projects", label: "Projects", icon: FolderKanban },
   { href: "/portfolio", label: "Passive Income Portfolio", icon: Landmark },
   { href: "/contractors", label: "Contractors", icon: HardHat },
