@@ -118,7 +118,7 @@ function RentalView({ investment }: { investment: RentalProperty }) {
       {activeTab === "lease" && <LeaseAgreementTab investment={investment} />}
       {activeTab === "vital" && <VitalInformationTab investment={investment} />}
       {activeTab === "workorders" && <WorkOrdersTab investment={investment} />}
-      {activeTab === "property" && <TabPlaceholder label="Property Information" />}
+      {activeTab === "property" && <PropertyInformationTab investment={investment} />}
     </div>
   );
 }
@@ -303,6 +303,84 @@ function OverviewTab({ investment }: { investment: RentalProperty }) {
           <ExpenseLine label="Property Mgr" value={investment.propertyManagerFee} color="text-violet-600" />
           <ExpenseLine label="Total Expenses" value={totalExpenses} color="text-red-600" bold />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function PropertyInformationTab({ investment }: { investment: RentalProperty }) {
+  const store = useStore();
+  const update = (patch: Partial<RentalProperty>) => store.updateInvestment(investment.id, patch);
+
+  const basicFields: { key: keyof RentalProperty; label: string; placeholder: string; type?: string }[] = [
+    { key: "yearBuilt", label: "Year Built", placeholder: "1985" },
+    { key: "squareFootage", label: "Square Footage", placeholder: "1,800" },
+    { key: "bedrooms", label: "Bedrooms", placeholder: "3" },
+    { key: "bathrooms", label: "Bathrooms", placeholder: "2" },
+    { key: "lotSize", label: "Lot Size", placeholder: "0.25 acres" },
+    { key: "propertyType", label: "Property Type", placeholder: "Single Family, Duplex, etc." },
+    { key: "foundationType", label: "Foundation Type", placeholder: "Slab, Crawlspace, Basement" },
+    { key: "garageType", label: "Garage", placeholder: "2-car attached" },
+  ];
+
+  const materialItems: { key: keyof RentalProperty; label: string; hint: string }[] = [
+    { key: "acInstalled", label: "AC / HVAC Installed", hint: "Year or date" },
+    { key: "roofInstalled", label: "Roof Installed", hint: "Year or date" },
+    { key: "guttersInstalled", label: "Gutters Installed", hint: "Year or date" },
+    { key: "floorsInstalled", label: "Floors Installed", hint: "Year or date" },
+    { key: "kitchenRemodeled", label: "Kitchen Last Remodeled", hint: "Year or date" },
+    { key: "bathroomRemodeled", label: "Bathroom Last Remodeled", hint: "Year or date" },
+    { key: "waterHeaterInstalled", label: "Water Heater Installed", hint: "Year or date" },
+    { key: "furnaceInstalled", label: "Furnace Installed", hint: "Year or date" },
+    { key: "electricalUpdated", label: "Electrical Updated", hint: "Year or date" },
+    { key: "plumbingUpdated", label: "Plumbing Updated", hint: "Year or date" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Basic property info */}
+      <div className="stat-card">
+        <h3 className="text-lg font-semibold text-slate-900 mb-1">Property Information</h3>
+        <p className="text-xs text-slate-500 mb-5">Core details about this property.</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {basicFields.map((f) => (
+            <div key={f.key}>
+              <label className="text-xs text-slate-500 block mb-1">{f.label}</label>
+              <input type="text" value={(investment[f.key] as string) || ""}
+                onChange={(e) => update({ [f.key]: e.target.value } as Partial<RentalProperty>)}
+                placeholder={f.placeholder}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Material item facts */}
+      <div className="stat-card">
+        <h3 className="text-lg font-semibold text-slate-900 mb-1">Material Item Facts</h3>
+        <p className="text-xs text-slate-500 mb-5">Major systems and improvements — when were they last installed or updated?</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {materialItems.map((m) => (
+            <div key={m.key} className="border border-slate-200 rounded-lg p-3 hover:border-blue-200 transition">
+              <label className="text-sm font-medium text-slate-700 block mb-1.5">{m.label}</label>
+              <input type="text" value={(investment[m.key] as string) || ""}
+                onChange={(e) => update({ [m.key]: e.target.value } as Partial<RentalProperty>)}
+                placeholder={m.hint}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Notes */}
+      <div className="stat-card">
+        <h3 className="text-sm font-semibold text-slate-700 mb-2">Additional Property Notes</h3>
+        <textarea value={investment.propertyNotes}
+          onChange={(e) => update({ propertyNotes: e.target.value })}
+          placeholder="Any other important property information — known issues, warranties, appliance ages, neighborhood notes, etc."
+          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm h-32 resize-none" />
       </div>
     </div>
   );
