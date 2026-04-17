@@ -4,13 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, FolderKanban, HardHat, FileText,
-  MessageSquare, Settings, Building2, Phone, UserPlus,
+  MessageSquare, Settings, Building2, Phone, UserPlus, Landmark,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/projects", label: "Projects", icon: FolderKanban },
+  { href: "/portfolio", label: "Passive Income Portfolio", icon: Landmark },
   { href: "/contractors", label: "Contractors", icon: HardHat },
   { href: "/invoices", label: "Invoices", icon: FileText },
   { href: "/communications", label: "Communications", icon: MessageSquare },

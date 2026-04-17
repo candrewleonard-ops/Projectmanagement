@@ -211,3 +211,100 @@ export interface HeatmapPoint {
   hasUnconfirmedOrders: boolean;
   label: string;
 }
+
+// ---- Passive Income Portfolio ----
+export type InvestmentType = "rental" | "note";
+
+export interface UtilityInfo {
+  tenantPays: boolean;
+  monthlyCost: number;
+}
+
+export interface RentalProperty {
+  id: string;
+  type: "rental";
+  name: string;
+  address: PropertyAddress;
+  photos: string[]; // base64 data URLs
+  // PITI breakdown
+  principal: number;
+  interest: number;
+  taxes: number;
+  insurance: number;
+  // Rent
+  monthlyRent: number;
+  // Utilities
+  gas: UtilityInfo;
+  electric: UtilityInfo;
+  sewer: UtilityInfo;
+  water: UtilityInfo;
+  trash: UtilityInfo;
+  // Lease Agreement
+  depositAmount: number;
+  leaseStartDate: string;
+  leaseEndDate: string;
+  tenantNames: string;
+  numberOfOccupants: number;
+  tenantContactInfo: string;
+  propertyManagerContact: string;
+  propertyManagerFee: number;
+  // Vital Information
+  electricProvider: string;
+  electricAccount: string;
+  waterProvider: string;
+  waterAccount: string;
+  gasProvider: string;
+  gasAccount: string;
+  sewerProvider: string;
+  sewerAccount: string;
+  trashProvider: string;
+  trashAccount: string;
+  // Work Orders
+  workOrders: WorkOrder[];
+  // Property Information
+  yearBuilt: string;
+  squareFootage: string;
+  bedrooms: string;
+  bathrooms: string;
+  lotSize: string;
+  propertyType: string; // single family, duplex, etc.
+  acInstalled: string;
+  roofInstalled: string;
+  guttersInstalled: string;
+  floorsInstalled: string;
+  kitchenRemodeled: string;
+  bathroomRemodeled: string;
+  waterHeaterInstalled: string;
+  furnaceInstalled: string;
+  electricalUpdated: string;
+  plumbingUpdated: string;
+  foundationType: string;
+  garageType: string;
+  propertyNotes: string;
+  createdAt: string;
+}
+
+export interface WorkOrder {
+  id: string;
+  description: string;
+  cost: number;
+  date: string;
+  status: "open" | "completed";
+}
+
+export interface NoteInvestment {
+  id: string;
+  type: "note";
+  name: string;
+  borrowerName: string;
+  loanAmount: number;
+  dateLent: string;
+  dateDue: string;
+  monthlyPaymentDate: string;
+  monthlyPaymentAmount: number;
+  annualInterestRate: number;
+  collateral: string;
+  createdAt: string;
+}
+
+export type Investment = RentalProperty | NoteInvestment;
