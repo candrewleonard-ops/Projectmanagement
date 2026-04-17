@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Home, FileText, Trash2, MapPin, Upload, X, Camera, Zap, Droplets, Flame, Waves, Recycle } from "lucide-react";
+import { ArrowLeft, Home, FileText, Trash2, MapPin, Upload, X, Camera, Zap, Droplets, Flame, Waves, Recycle, Plus, CheckCircle2 } from "lucide-react";
 import { useState, useRef } from "react";
 import { useStore } from "@/lib/store";
 import { RentalProperty, NoteInvestment, UtilityInfo } from "@/lib/types";
@@ -117,7 +117,7 @@ function RentalView({ investment }: { investment: RentalProperty }) {
       {activeTab === "overview" && <OverviewTab investment={investment} />}
       {activeTab === "lease" && <LeaseAgreementTab investment={investment} />}
       {activeTab === "vital" && <VitalInformationTab investment={investment} />}
-      {activeTab === "workorders" && <TabPlaceholder label="Work Orders" />}
+      {activeTab === "workorders" && <WorkOrdersTab investment={investment} />}
       {activeTab === "property" && <TabPlaceholder label="Property Information" />}
     </div>
   );
@@ -304,6 +304,126 @@ function OverviewTab({ investment }: { investment: RentalProperty }) {
           <ExpenseLine label="Total Expenses" value={totalExpenses} color="text-red-600" bold />
         </div>
       </div>
+    </div>
+  );
+}
+
+function WorkOrdersTab({ investment }: { investment: RentalProperty }) {
+  const store = useStore();
+  const [showNew, setShowNew] = useState(false);
+  const [newDesc, setNewDesc] = useState("");
+  const [newCost, setNewCost] = useState("");
+
+  const handleCreate = () => {
+    if (!newDesc.trim()) return;
+    store.addWorkOrder(investment.id, {
+      id: `wo-${Date.now()}`,
+      description: newDesc.trim(),
+      cost: parseFloat(newCost) || 0,
+      date: new Date().toISOString().slice(0, 10),
+      status: "open",
+    });
+    setNewDesc("");
+    setNewCost("");
+    setShowNew(false);
+  };
+
+  const toggleStatus = (woId: string, current: "open" | "completed") => {
+    store.updateWorkOrder(investment.id, woId, { status: current === "open" ? "completed" : "open" });
+  };
+
+  const openOrders = investment.workOrders.filter((w) => w.status === "open");
+  const completedOrders = investment.workOrders.filter((w) => w.status === "completed");
+  const totalCost = investment.workOrders.reduce((s, w) => s + w.cost, 0);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900">Work Orders</h3>
+          <p className="text-xs text-slate-500 mt-1">{investment.workOrders.length} total &middot; {formatCurrency(totalCost)} spent</p>
+        </div>
+        <button onClick={() => setShowNew(true)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+          <Plus size={16} /> Create Work Order
+        </button>
+      </div>
+
+      {showNew && (
+        <div className="stat-card ring-2 ring-blue-200">
+          <h4 className="text-sm font-semibold text-slate-700 mb-3">New Work Order</h4>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs text-slate-500 block mb-1">Description</label>
+              <textarea value={newDesc} onChange={(e) => setNewDesc(e.target.value)}
+                placeholder="Describe the work needed..."
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm h-20 resize-none" />
+            </div>
+            <div className="w-48">
+              <label className="text-xs text-slate-500 block mb-1">Cost</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                <input type="number" value={newCost} onChange={(e) => setNewCost(e.target.value)}
+                  placeholder="0" className="w-full border border-slate-300 rounded-lg pl-7 pr-3 py-2 text-sm" />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={handleCreate} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">Create</button>
+              <button onClick={() => { setShowNew(false); setNewDesc(""); setNewCost(""); }} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {investment.workOrders.length === 0 && !showNew && (
+        <div className="stat-card flex flex-col items-center py-12">
+          <Plus size={40} className="text-slate-300 mb-2" />
+          <p className="text-sm text-slate-400">No work orders yet. Click &quot;Create Work Order&quot; to add one.</p>
+        </div>
+      )}
+
+      {openOrders.length > 0 && (
+        <div>
+          <h4 className="text-sm font-semibold text-slate-700 mb-2">Open ({openOrders.length})</h4>
+          <div className="space-y-2">
+            {openOrders.map((wo) => (
+              <div key={wo.id} className="stat-card border-l-4 border-l-amber-400 flex items-start gap-3">
+                <button onClick={() => toggleStatus(wo.id, wo.status)}
+                  className="mt-0.5 w-5 h-5 rounded border-2 border-slate-300 hover:border-blue-500 flex-shrink-0 transition" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-slate-800">{wo.description}</p>
+                  <p className="text-xs text-slate-400 mt-1">{wo.date}</p>
+                </div>
+                <span className="text-sm font-semibold text-slate-700">{formatCurrency(wo.cost)}</span>
+                <button onClick={() => store.deleteWorkOrder(investment.id, wo.id)}
+                  className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600 flex-shrink-0"><Trash2 size={14} /></button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {completedOrders.length > 0 && (
+        <div>
+          <h4 className="text-sm font-semibold text-slate-700 mb-2">Completed ({completedOrders.length})</h4>
+          <div className="space-y-2">
+            {completedOrders.map((wo) => (
+              <div key={wo.id} className="stat-card border-l-4 border-l-emerald-400 flex items-start gap-3 opacity-75">
+                <button onClick={() => toggleStatus(wo.id, wo.status)}
+                  className="mt-0.5 w-5 h-5 rounded bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle2 size={14} className="text-white" />
+                </button>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-slate-500 line-through">{wo.description}</p>
+                  <p className="text-xs text-slate-400 mt-1">{wo.date}</p>
+                </div>
+                <span className="text-sm font-semibold text-slate-500">{formatCurrency(wo.cost)}</span>
+                <button onClick={() => store.deleteWorkOrder(investment.id, wo.id)}
+                  className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600 flex-shrink-0"><Trash2 size={14} /></button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
