@@ -225,7 +225,8 @@ export interface RentalProperty {
   type: "rental";
   name: string;
   address: PropertyAddress;
-  photos: string[]; // base64 data URLs
+  photos: string[];
+  collectingIncome: boolean; // base64 data URLs
   // PITI breakdown
   principal: number;
   interest: number;
@@ -296,6 +297,7 @@ export interface NoteInvestment {
   id: string;
   type: "note";
   name: string;
+  collectingIncome: boolean;
   borrowerName: string;
   loanAmount: number;
   dateLent: string;

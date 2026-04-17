@@ -33,13 +33,19 @@ export default function PortfolioPage() {
   const totalRentals = store.getRentalProperties().length;
   const totalNotes = store.getNoteInvestments().length;
 
-  // Calculate total monthly cashflow across all rentals
-  const totalMonthlyCashflow = store.getRentalProperties().reduce((sum, r) => {
-    const piti = r.principal + r.interest + r.taxes + r.insurance;
-    const utilCosts = [r.gas, r.electric, r.sewer, r.water, r.trash]
-      .filter((u) => !u.tenantPays).reduce((s, u) => s + u.monthlyCost, 0);
-    return sum + (r.monthlyRent - piti - utilCosts - r.propertyManagerFee);
-  }, 0);
+  // Calculate total monthly cashflow across rentals + notes (only if collecting)
+  const rentalCashflow = store.getRentalProperties()
+    .filter((r) => r.collectingIncome !== false)
+    .reduce((sum, r) => {
+      const piti = r.principal + r.interest + r.taxes + r.insurance;
+      const utilCosts = [r.gas, r.electric, r.sewer, r.water, r.trash]
+        .filter((u) => !u.tenantPays).reduce((s, u) => s + u.monthlyCost, 0);
+      return sum + (r.monthlyRent - piti - utilCosts - r.propertyManagerFee);
+    }, 0);
+  const noteCashflow = store.getNoteInvestments()
+    .filter((n) => n.collectingIncome !== false)
+    .reduce((sum, n) => sum + n.monthlyPaymentAmount, 0);
+  const totalMonthlyCashflow = rentalCashflow + noteCashflow;
 
   return (
     <div className="space-y-6 fade-in">
@@ -101,7 +107,7 @@ export default function PortfolioPage() {
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((inv) => (
-            <InvestmentCard key={inv.id} investment={inv} onDelete={() => setDeleteConfirm(inv.id)} />
+            <InvestmentCard key={inv.id} investment={inv} store={store} onDelete={() => setDeleteConfirm(inv.id)} />
           ))}
         </div>
       ) : (
@@ -156,7 +162,14 @@ export default function PortfolioPage() {
   );
 }
 
-function InvestmentCard({ investment, onDelete }: { investment: Investment; onDelete: () => void }) {
+function InvestmentCard({ investment, store, onDelete }: { investment: Investment; store: ReturnType<typeof useStore>; onDelete: () => void }) {
+  const collecting = investment.collectingIncome !== false;
+  const toggleCollecting = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    store.updateInvestment(investment.id, { collectingIncome: !collecting });
+  };
+
   if (investment.type === "rental") {
     const piti = investment.principal + investment.interest + investment.taxes + investment.insurance;
     const utilCosts = [investment.gas, investment.electric, investment.sewer, investment.water, investment.trash]
@@ -164,7 +177,7 @@ function InvestmentCard({ investment, onDelete }: { investment: Investment; onDe
     const cashflow = investment.monthlyRent - piti - utilCosts - investment.propertyManagerFee;
 
     return (
-      <div className="stat-card group relative">
+      <div className={cn("stat-card group relative", !collecting && "opacity-60 ring-2 ring-amber-300")}>
         <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition">
           <Link href={`/portfolio/${investment.id}`} className="p-1.5 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600"><Edit3 size={14} /></Link>
           <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><Trash2 size={14} /></button>
@@ -172,6 +185,7 @@ function InvestmentCard({ investment, onDelete }: { investment: Investment; onDe
         <Link href={`/portfolio/${investment.id}`}>
           <div className="flex items-center gap-2 mb-1">
             <span className="badge bg-emerald-100 text-emerald-700">Rental Property</span>
+            {!collecting && <span className="badge bg-amber-100 text-amber-700">Not Collecting</span>}
           </div>
           {investment.photos.length > 0 ? (
             <div className="w-full h-32 rounded-lg mb-3 overflow-hidden bg-slate-100">
@@ -194,6 +208,11 @@ function InvestmentCard({ investment, onDelete }: { investment: Investment; onDe
             <span>{investment.tenantNames || "No tenant"}</span>
           </div>
         </Link>
+        <button onClick={toggleCollecting}
+          className={cn("mt-3 w-full py-1.5 rounded-lg text-xs font-medium transition",
+            collecting ? "bg-amber-50 text-amber-700 hover:bg-amber-100" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100")}>
+          {collecting ? "Not Collecting Income" : "Resume Collecting Income"}
+        </button>
       </div>
     );
   }
@@ -206,7 +225,7 @@ function InvestmentCard({ investment, onDelete }: { investment: Investment; onDe
   const totalProfit = months > 0 ? (inv.monthlyPaymentAmount * months) - inv.loanAmount : 0;
 
   return (
-    <div className="stat-card group relative">
+    <div className={cn("stat-card group relative", !collecting && "opacity-60 ring-2 ring-amber-300")}>
       <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition">
         <Link href={`/portfolio/${inv.id}`} className="p-1.5 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600"><Edit3 size={14} /></Link>
         <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><Trash2 size={14} /></button>
@@ -214,6 +233,7 @@ function InvestmentCard({ investment, onDelete }: { investment: Investment; onDe
       <Link href={`/portfolio/${inv.id}`}>
         <div className="flex items-center gap-2 mb-1">
           <span className="badge bg-violet-100 text-violet-700">Note Investment</span>
+          {!collecting && <span className="badge bg-amber-100 text-amber-700">Not Collecting</span>}
         </div>
         <div className="w-full h-32 rounded-lg mb-3 bg-gradient-to-br from-violet-50 to-blue-50 flex items-center justify-center">
           <FileText size={32} className="text-violet-300" />
@@ -230,6 +250,11 @@ function InvestmentCard({ investment, onDelete }: { investment: Investment; onDe
           <span>{inv.collateral ? "Collateralized" : "No collateral"}</span>
         </div>
       </Link>
+      <button onClick={toggleCollecting}
+        className={cn("mt-3 w-full py-1.5 rounded-lg text-xs font-medium transition",
+          collecting ? "bg-amber-50 text-amber-700 hover:bg-amber-100" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100")}>
+        {collecting ? "Not Collecting Monthly" : "Resume Collecting Monthly"}
+      </button>
     </div>
   );
 }
@@ -253,7 +278,7 @@ function NewInvestmentModal({ store, onClose }: { store: ReturnType<typeof useSt
     if (!rentalForm.name.trim()) return;
     const id = `inv-${Date.now()}`;
     const rental: RentalProperty = {
-      id, type: "rental", name: rentalForm.name,
+      id, type: "rental", name: rentalForm.name, collectingIncome: true,
       address: { street: rentalForm.street, city: rentalForm.city, state: rentalForm.state, zip: rentalForm.zip, lat: 33 + Math.random() * 15, lng: -120 + Math.random() * 50 },
       photos: [], principal: 0, interest: 0, taxes: 0, insurance: 0,
       monthlyRent: 0,
@@ -274,7 +299,7 @@ function NewInvestmentModal({ store, onClose }: { store: ReturnType<typeof useSt
     if (!noteForm.name.trim()) return;
     const id = `inv-${Date.now()}`;
     const note: NoteInvestment = {
-      id, type: "note", name: noteForm.name,
+      id, type: "note", name: noteForm.name, collectingIncome: true,
       borrowerName: noteForm.borrowerName,
       loanAmount: parseFloat(noteForm.loanAmount) || 0,
       dateLent: noteForm.dateLent, dateDue: noteForm.dateDue,
