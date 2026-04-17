@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import {
   Project, Contractor, TaskItem, ExpenseItem, Invoice,
   Communication, Folder, User, Organization, ProjectPhoto, ThreeDRender,
-  Investment, RentalProperty, NoteInvestment, WorkOrder,
+  Investment, RentalProperty, NoteInvestment, WorkOrder, WeeklyTodo,
 } from "./types";
 import {
   projects as defaultProjects,
@@ -43,6 +43,7 @@ interface StoreState {
   organization: Organization;
   vitalInfos: VitalInfo[];
   investments: Investment[];
+  weeklyTodos: WeeklyTodo[];
 }
 
 interface StoreActions {
@@ -88,6 +89,12 @@ interface StoreActions {
   addWorkOrder: (investmentId: string, workOrder: WorkOrder) => void;
   updateWorkOrder: (investmentId: string, workOrderId: string, updates: Partial<WorkOrder>) => void;
   deleteWorkOrder: (investmentId: string, workOrderId: string) => void;
+  // Weekly Todos
+  addWeeklyTodo: (todo: WeeklyTodo) => void;
+  updateWeeklyTodo: (id: string, updates: Partial<WeeklyTodo>) => void;
+  deleteWeeklyTodo: (id: string) => void;
+  getProjectWeeklyTodos: (projectId: string) => WeeklyTodo[];
+  getVisibleWeeklyTodos: () => WeeklyTodo[];
   // Helpers
   getProject: (id: string) => Project | undefined;
   getContractor: (id: string) => Contractor | undefined;
@@ -134,6 +141,7 @@ function getDefaultState(): StoreState {
     organization: defaultOrg,
     vitalInfos: [],
     investments: [],
+    weeklyTodos: [],
   };
 }
 
@@ -179,6 +187,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       tasks: s.tasks.filter((t) => t.projectId !== id),
       expenses: s.expenses.filter((e) => e.projectId !== id),
       folders: s.folders.map((f) => ({ ...f, projectIds: f.projectIds.filter((pid) => pid !== id) })),
+      weeklyTodos: (s.weeklyTodos ?? []).filter((t) => t.projectId !== id),
     })),
     // Contractors
     addContractor: (c) => update((s) => ({ ...s, contractors: [...s.contractors, c] })),
@@ -287,6 +296,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           : inv
       ),
     })),
+    // Weekly Todos
+    addWeeklyTodo: (t) => update((s) => ({ ...s, weeklyTodos: [...(s.weeklyTodos ?? []), t] })),
+    updateWeeklyTodo: (id, u) => update((s) => ({
+      ...s,
+      weeklyTodos: (s.weeklyTodos ?? []).map((t) => t.id === id ? { ...t, ...u } : t),
+    })),
+    deleteWeeklyTodo: (id) => update((s) => ({
+      ...s,
+      weeklyTodos: (s.weeklyTodos ?? []).filter((t) => t.id !== id),
+    })),
+    getProjectWeeklyTodos: (pid) => (state.weeklyTodos ?? []).filter((t) => t.projectId === pid),
+    getVisibleWeeklyTodos: () => (state.weeklyTodos ?? []).filter((t) => !t.hiddenFromDashboard),
     // Helpers
     getProject: (id) => state.projects.find((p) => p.id === id),
     getContractor: (id) => state.contractors.find((c) => c.id === id),

@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import {
   FolderKanban, TrendingUp, DollarSign, AlertTriangle,
-  ArrowRight, MapPin, CheckCircle2, Clock, Ban,
+  ArrowRight, MapPin, ListChecks,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { formatCurrency, progressPercent, cn } from "@/lib/utils";
 import { BudgetChart } from "@/components/BudgetChart";
+import { WeeklyTodo } from "@/lib/types";
 
 export default function Dashboard() {
   const store = useStore();
@@ -73,15 +75,8 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
-          <div className="stat-card">
-            <h3 className="text-sm font-semibold text-slate-700 mb-3">Task Overview</h3>
-            <div className="space-y-2.5">
-              <TaskRow icon={<Ban size={14} />} label="Blocked" count={store.tasks.filter(t => t.status === "blocked").length} color="text-red-600 bg-red-50" />
-              <TaskRow icon={<Clock size={14} />} label="In Progress" count={store.tasks.filter(t => t.status === "in_progress").length} color="text-sky-600 bg-sky-50" />
-              <TaskRow icon={<Clock size={14} />} label="Scheduled" count={scheduledTasks} color="text-violet-600 bg-violet-50" />
-              <TaskRow icon={<CheckCircle2 size={14} />} label="Completed" count={completedTasks} color="text-emerald-600 bg-emerald-50" />
-            </div>
-          </div>
+          <ThisWeekDashboard />
+
           <div className="stat-card">
             <h3 className="text-sm font-semibold text-slate-700 mb-3">Project Library</h3>
             <div className="space-y-2">
@@ -195,12 +190,84 @@ function StatCard({ icon, label, value, sub, color, pulse }: {
   );
 }
 
-function TaskRow({ icon, label, count, color }: { icon: React.ReactNode; label: string; count: number; color: string }) {
+function ThisWeekDashboard() {
+  const store = useStore();
+  const activeProjects = store.getActiveProjects();
+  const visibleTodos = store.getVisibleWeeklyTodos();
+  const [confirming, setConfirming] = useState<WeeklyTodo | null>(null);
+
+  // Group todos by project (only active projects)
+  const activeProjectIds = new Set(activeProjects.map((p) => p.id));
+  const grouped = new Map<string, WeeklyTodo[]>();
+  for (const todo of visibleTodos) {
+    if (!activeProjectIds.has(todo.projectId)) continue;
+    const existing = grouped.get(todo.projectId) || [];
+    existing.push(todo);
+    grouped.set(todo.projectId, existing);
+  }
+
+  const handleCheck = () => {
+    if (!confirming) return;
+    store.updateWeeklyTodo(confirming.id, { hiddenFromDashboard: true });
+    setConfirming(null);
+  };
+
   return (
-    <div className="flex items-center gap-3">
-      <div className={cn("w-7 h-7 rounded-md flex items-center justify-center", color)}>{icon}</div>
-      <span className="text-sm text-slate-700 flex-1">{label}</span>
-      <span className="text-sm font-semibold text-slate-900">{count}</span>
+    <div className="stat-card">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+          <ListChecks size={16} className="text-blue-600" /> This Week
+        </h3>
+        <span className="text-xs text-slate-400">{visibleTodos.length} item{visibleTodos.length === 1 ? "" : "s"}</span>
+      </div>
+
+      {grouped.size === 0 ? (
+        <div className="py-6 text-center">
+          <p className="text-sm text-slate-400">No items for this week.</p>
+          <p className="text-xs text-slate-400 mt-1">Add items from each project&apos;s page.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {activeProjects.map((project) => {
+            const todos = grouped.get(project.id);
+            if (!todos || todos.length === 0) return null;
+            return (
+              <div key={project.id}>
+                <Link href={`/projects/${project.id}`} className="flex items-center gap-2 mb-2 group">
+                  <MapPin size={12} className="text-slate-400" />
+                  <span className="text-xs font-semibold text-slate-600 group-hover:text-blue-600 transition">{project.name}</span>
+                  <span className="text-xs text-slate-400">&middot; {project.address.city}, {project.address.state}</span>
+                </Link>
+                <div className="space-y-1.5">
+                  {todos.map((todo) => (
+                    <label key={todo.id} className="flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-50 transition cursor-pointer">
+                      <input type="checkbox" checked={false}
+                        onChange={() => setConfirming(todo)}
+                        className="mt-0.5 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                      <span className="text-sm text-slate-700 flex-1">{todo.text}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {confirming && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setConfirming(null)}>
+          <div className="bg-white rounded-2xl p-6 shadow-2xl max-w-md" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Are you sure?</h3>
+            <p className="text-sm text-slate-600 mb-1">Mark this as done and remove from the dashboard?</p>
+            <p className="text-sm text-slate-800 font-medium mb-4 p-3 bg-slate-50 rounded-lg">&ldquo;{confirming.text}&rdquo;</p>
+            <p className="text-xs text-slate-500 mb-4">It will remain visible on the project&apos;s page.</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setConfirming(null)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg font-medium">No, keep it</button>
+              <button onClick={handleCheck} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">Yes, mark done</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

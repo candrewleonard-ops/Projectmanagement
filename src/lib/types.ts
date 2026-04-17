@@ -200,6 +200,15 @@ export interface ServiceItem {
   unit: string; // "per unit", "per hour", "flat rate"
 }
 
+// ---- Weekly Todos ----
+export interface WeeklyTodo {
+  id: string;
+  projectId: string;
+  text: string;
+  hiddenFromDashboard: boolean;
+  createdAt: string;
+}
+
 // ---- Heatmap ----
 export interface HeatmapPoint {
   id: string;
