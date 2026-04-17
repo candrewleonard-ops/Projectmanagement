@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Home, FileText, Trash2, MapPin, Upload, X, Camera } from "lucide-react";
+import { ArrowLeft, Home, FileText, Trash2, MapPin, Upload, X, Camera, Zap, Droplets, Flame, Waves, Recycle } from "lucide-react";
 import { useState, useRef } from "react";
 import { useStore } from "@/lib/store";
 import { RentalProperty, NoteInvestment, UtilityInfo } from "@/lib/types";
@@ -116,7 +116,7 @@ function RentalView({ investment }: { investment: RentalProperty }) {
 
       {activeTab === "overview" && <OverviewTab investment={investment} />}
       {activeTab === "lease" && <LeaseAgreementTab investment={investment} />}
-      {activeTab === "vital" && <TabPlaceholder label="Vital Information" />}
+      {activeTab === "vital" && <VitalInformationTab investment={investment} />}
       {activeTab === "workorders" && <TabPlaceholder label="Work Orders" />}
       {activeTab === "property" && <TabPlaceholder label="Property Information" />}
     </div>
@@ -302,6 +302,60 @@ function OverviewTab({ investment }: { investment: RentalProperty }) {
           <ExpenseLine label="Landlord Utilities" value={landlordUtilCost} color="text-amber-600" />
           <ExpenseLine label="Property Mgr" value={investment.propertyManagerFee} color="text-violet-600" />
           <ExpenseLine label="Total Expenses" value={totalExpenses} color="text-red-600" bold />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VitalInformationTab({ investment }: { investment: RentalProperty }) {
+  const store = useStore();
+  const update = (patch: Partial<RentalProperty>) => store.updateInvestment(investment.id, patch);
+
+  const utilities = [
+    { providerKey: "electricProvider" as const, accountKey: "electricAccount" as const, label: "Electric", icon: Zap, color: "text-amber-600 bg-amber-100", placeholder: "Georgia Power" },
+    { providerKey: "waterProvider" as const, accountKey: "waterAccount" as const, label: "Water", icon: Droplets, color: "text-blue-600 bg-blue-100", placeholder: "City Water Dept" },
+    { providerKey: "gasProvider" as const, accountKey: "gasAccount" as const, label: "Gas", icon: Flame, color: "text-orange-600 bg-orange-100", placeholder: "Atlanta Gas Light" },
+    { providerKey: "sewerProvider" as const, accountKey: "sewerAccount" as const, label: "Sewer", icon: Waves, color: "text-cyan-600 bg-cyan-100", placeholder: "City Sewer" },
+    { providerKey: "trashProvider" as const, accountKey: "trashAccount" as const, label: "Trash", icon: Recycle, color: "text-emerald-600 bg-emerald-100", placeholder: "Waste Management" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="stat-card">
+        <h3 className="text-lg font-semibold text-slate-900 mb-1">Vital Information</h3>
+        <p className="text-xs text-slate-500 mb-5">Utility providers and account info for this property.</p>
+
+        <div className="space-y-4">
+          {utilities.map((u) => {
+            const Icon = u.icon;
+            return (
+              <div key={u.providerKey} className="border border-slate-200 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", u.color)}>
+                    <Icon size={16} />
+                  </div>
+                  <h4 className="text-sm font-semibold text-slate-800">{u.label}</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-slate-500 block mb-1">Provider / Company</label>
+                    <input type="text" value={investment[u.providerKey]}
+                      onChange={(e) => update({ [u.providerKey]: e.target.value } as Partial<RentalProperty>)}
+                      placeholder={u.placeholder}
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-500 block mb-1">Account # / Login</label>
+                    <input type="text" value={investment[u.accountKey]}
+                      onChange={(e) => update({ [u.accountKey]: e.target.value } as Partial<RentalProperty>)}
+                      placeholder="Account number or login info"
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
