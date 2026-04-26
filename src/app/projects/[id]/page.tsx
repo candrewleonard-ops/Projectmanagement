@@ -48,7 +48,7 @@ export default function ProjectDetailPage() {
     { key: "tasks", label: "Tasks & Work Orders", count: projectTasks.length },
     { key: "expenses", label: "Expenses", count: projectExpenses.length },
     { key: "vital", label: "Vital Information" },
-    { key: "photos", label: "Photos", count: project.photos.length },
+    { key: "photos", label: "Files & Photos", count: project.photos.length },
     { key: "renders", label: "3D Renders", count: project.renders.length },
     { key: "contractors", label: "Contractors", count: projectContractors.length },
     { key: "comms", label: "Communications", count: projectComms.length },
@@ -399,10 +399,23 @@ function ExpensesTab({ expenses }: { expenses: any[] }) {
 }
 
 function PhotosTab({ photos, projectId, store }: { photos: any[]; projectId: string; store: any }) {
-  const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
+  const [viewingFile, setViewingFile] = useState<string | null>(null);
   const [captionInput, setCaptionInput] = useState("");
   const [showCaptionModal, setShowCaptionModal] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+
+  const detectFileType = (item: any): "pdf" | "xlsx" | "image" => {
+    const url = (item.url || "").toLowerCase();
+    const caption = (item.caption || "").toLowerCase();
+    if (url.startsWith("data:application/pdf") || caption.endsWith(".pdf")) return "pdf";
+    if (
+      url.startsWith("data:application/vnd.openxmlformats-officedocument.spreadsheetml") ||
+      url.startsWith("data:application/vnd.ms-excel") ||
+      caption.endsWith(".xlsx") ||
+      caption.endsWith(".xls")
+    ) return "xlsx";
+    return "image";
+  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -434,27 +447,57 @@ function PhotosTab({ photos, projectId, store }: { photos: any[]; projectId: str
     setCaptionInput("");
   };
 
-  const handleDelete = (photoId: string) => {
-    const updated = photos.filter((p) => p.id !== photoId);
+  const handleDelete = (fileId: string) => {
+    const updated = photos.filter((p) => p.id !== fileId);
     store.updateProject(projectId, { photos: updated });
-    setViewingPhoto(null);
+    setViewingFile(null);
   };
+
+  const handleFileClick = (item: any) => {
+    const fileType = detectFileType(item);
+    if (fileType === "xlsx") {
+      const link = document.createElement("a");
+      link.href = item.url;
+      link.download = item.caption || "spreadsheet.xlsx";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return;
+    }
+    if (fileType === "pdf") {
+      setViewingFile(item.id);
+      return;
+    }
+    setViewingFile(item.id);
+  };
+
+  const handleDownloadXlsx = (item: any) => {
+    const link = document.createElement("a");
+    link.href = item.url;
+    link.download = item.caption || "spreadsheet.xlsx";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const viewingItem = photos.find((p) => p.id === viewingFile);
+  const viewingType = viewingItem ? detectFileType(viewingItem) : null;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-sm font-semibold text-slate-700">Project Photos</h3>
+        <h3 className="text-sm font-semibold text-slate-700">Project Files & Photos</h3>
         <label className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 cursor-pointer">
-          <Upload size={14} /> Upload Photos
-          <input type="file" accept="image/*" multiple className="hidden" onChange={handleFileSelect} />
+          <Upload size={14} /> Upload Files
+          <input type="file" accept="image/*,.pdf,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple className="hidden" onChange={handleFileSelect} />
         </label>
       </div>
 
       {showCaptionModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCaptionModal(false)}>
           <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h4 className="text-lg font-semibold text-slate-900 mb-2">Upload {pendingFiles.length} Photo{pendingFiles.length > 1 ? "s" : ""}</h4>
-            <p className="text-sm text-slate-500 mb-4">Add an optional caption for {pendingFiles.length > 1 ? "these photos" : "this photo"}.</p>
+            <h4 className="text-lg font-semibold text-slate-900 mb-2">Upload {pendingFiles.length} File{pendingFiles.length > 1 ? "s" : ""}</h4>
+            <p className="text-sm text-slate-500 mb-4">Add an optional caption for {pendingFiles.length > 1 ? "these files" : "this file"}.</p>
             <input
               type="text"
               placeholder="Caption (optional)"
@@ -472,32 +515,89 @@ function PhotosTab({ photos, projectId, store }: { photos: any[]; projectId: str
         </div>
       )}
 
-      {viewingPhoto && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50" onClick={() => setViewingPhoto(null)}>
-          <button onClick={() => setViewingPhoto(null)} className="absolute top-4 right-4 text-white hover:text-slate-300"><X size={28} /></button>
-          <button onClick={() => handleDelete(viewingPhoto)} className="absolute top-4 left-4 text-red-400 hover:text-red-300 flex items-center gap-1 text-sm"><Trash2 size={16} /> Delete</button>
-          <img src={photos.find((p) => p.id === viewingPhoto)?.url} alt="" className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg" onClick={(e) => e.stopPropagation()} />
-          <p className="absolute bottom-6 text-white text-sm bg-black/60 px-4 py-2 rounded-lg">{photos.find((p) => p.id === viewingPhoto)?.caption}</p>
+      {viewingFile && viewingItem && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50" onClick={() => setViewingFile(null)}>
+          <button onClick={() => setViewingFile(null)} className="absolute top-4 right-4 text-white hover:text-slate-300 z-10"><X size={28} /></button>
+          <button onClick={() => handleDelete(viewingFile)} className="absolute top-4 left-4 text-red-400 hover:text-red-300 flex items-center gap-1 text-sm z-10"><Trash2 size={16} /> Delete</button>
+          {viewingType === "image" && (
+            <img src={viewingItem.url} alt="" className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg" onClick={(e) => e.stopPropagation()} />
+          )}
+          {viewingType === "pdf" && (
+            <div className="w-[90vw] h-[85vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+              <iframe src={viewingItem.url} className="w-full h-full rounded-lg bg-white" title={viewingItem.caption} />
+              <button
+                onClick={() => window.open(viewingItem.url, "_blank")}
+                className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 flex items-center gap-2"
+              >
+                <ExternalLink size={14} /> Open in New Tab
+              </button>
+            </div>
+          )}
+          {viewingType === "xlsx" && (
+            <div className="flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
+              <FileText size={64} className="text-green-400" />
+              <p className="text-white text-lg font-medium">{viewingItem.caption}</p>
+              <button
+                onClick={() => handleDownloadXlsx(viewingItem)}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 flex items-center gap-2"
+              >
+                <Upload size={14} className="rotate-180" /> Download Spreadsheet
+              </button>
+            </div>
+          )}
+          <p className="absolute bottom-6 text-white text-sm bg-black/60 px-4 py-2 rounded-lg">{viewingItem.caption}</p>
         </div>
       )}
 
       {photos.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {photos.map((p) => (
-            <div key={p.id} className="stat-card p-3 cursor-pointer hover:shadow-md transition" onClick={() => setViewingPhoto(p.id)}>
-              <div className="aspect-[4/3] bg-slate-100 rounded-lg overflow-hidden mb-2">
-                <img src={p.url} alt={p.caption} className="w-full h-full object-cover" />
+          {photos.map((p) => {
+            const fileType = detectFileType(p);
+            return (
+              <div key={p.id} className="stat-card p-3 cursor-pointer hover:shadow-md transition relative" onClick={() => handleFileClick(p)}>
+                <div className="absolute top-2 right-2 z-10">
+                  <span className={cn(
+                    "text-[10px] font-bold uppercase px-1.5 py-0.5 rounded",
+                    fileType === "pdf" ? "bg-red-100 text-red-700" :
+                    fileType === "xlsx" ? "bg-green-100 text-green-700" :
+                    "bg-blue-100 text-blue-700"
+                  )}>
+                    {fileType === "pdf" ? "PDF" : fileType === "xlsx" ? "XLSX" : "IMG"}
+                  </span>
+                </div>
+                <div className="aspect-[4/3] bg-slate-100 rounded-lg overflow-hidden mb-2 flex items-center justify-center">
+                  {fileType === "image" && (
+                    <img src={p.url} alt={p.caption} className="w-full h-full object-cover" />
+                  )}
+                  {fileType === "pdf" && (
+                    <div className="flex flex-col items-center gap-2">
+                      <FileText size={40} className="text-red-400" />
+                      <span className="text-xs text-slate-500 font-medium">PDF Document</span>
+                    </div>
+                  )}
+                  {fileType === "xlsx" && (
+                    <div className="flex flex-col items-center gap-2">
+                      <FileText size={40} className="text-green-500" />
+                      <span className="text-xs text-slate-500 font-medium">Spreadsheet</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {fileType === "image" && <Camera size={12} className="text-blue-500 flex-shrink-0" />}
+                  {fileType === "pdf" && <FileText size={12} className="text-red-500 flex-shrink-0" />}
+                  {fileType === "xlsx" && <FileText size={12} className="text-green-500 flex-shrink-0" />}
+                  <p className="text-sm font-medium text-slate-800 truncate">{p.caption}</p>
+                </div>
+                <p className="text-xs text-slate-400">{formatDate(p.uploadedAt)}</p>
               </div>
-              <p className="text-sm font-medium text-slate-800 truncate">{p.caption}</p>
-              <p className="text-xs text-slate-400">{formatDate(p.uploadedAt)}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="stat-card flex flex-col items-center py-12">
           <Camera size={48} className="text-slate-300 mb-3" />
-          <p className="text-sm text-slate-400">No photos yet</p>
-          <p className="text-xs text-slate-300 mt-1">Click &ldquo;Upload Photos&rdquo; to add project images</p>
+          <p className="text-sm text-slate-400">No files yet</p>
+          <p className="text-xs text-slate-300 mt-1">Click &ldquo;Upload Files&rdquo; to add project images, SOW sheets, and documents</p>
         </div>
       )}
     </div>
