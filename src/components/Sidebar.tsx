@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, FolderKanban, HardHat, FileText,
-  MessageSquare, Settings, Phone, UserPlus, Landmark,
+  MessageSquare, Settings, Phone, UserPlus, Landmark, AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,7 @@ const nav = [
   { href: "/portfolio", label: "Passive Income Portfolio", icon: Landmark },
   { href: "/contractors", label: "Contractors", icon: HardHat },
   { href: "/invoices", label: "Invoices", icon: FileText },
-  { href: "/communications", label: "Communications", icon: MessageSquare },
+  { href: "/communications", label: "Hot Tasks & Comms", icon: AlertTriangle },
   { href: "/admin", label: "Admin / Users", icon: Settings },
   { href: "/contact", label: "Contact Us", icon: Phone },
 ];
