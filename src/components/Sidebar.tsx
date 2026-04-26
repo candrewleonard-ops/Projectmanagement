@@ -4,8 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, FolderKanban, HardHat, FileText,
-  MessageSquare, Settings, Building2, Phone, UserPlus,
+  MessageSquare, Settings, Phone, UserPlus,
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 const nav = [
@@ -25,13 +26,17 @@ export function Sidebar() {
 
   return (
     <aside className="fixed inset-y-0 left-0 w-64 bg-slate-900 text-slate-200 flex flex-col z-30">
-      <div className="h-16 flex items-center gap-3 px-5 border-b border-slate-700/50">
-        <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center">
-          <Building2 size={20} className="text-white" />
-        </div>
+      <div className="h-20 flex items-center gap-3 px-4 border-b border-slate-700/50">
+        <Image
+          src="/ProjectManagerLogo.png"
+          alt="Reinnovation Project Manager"
+          width={48}
+          height={48}
+          className="rounded-lg"
+        />
         <div>
-          <p className="font-bold text-sm text-white leading-tight">FlipCRM</p>
-          <p className="text-[10px] text-slate-400 leading-tight">by Reinnovation Homes</p>
+          <p className="font-bold text-sm text-white leading-tight">Reinnovation</p>
+          <p className="text-[10px] text-slate-400 leading-tight">Project Manager</p>
         </div>
       </div>
 
