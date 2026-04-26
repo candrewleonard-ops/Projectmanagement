@@ -4,14 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, FolderKanban, HardHat, FileText,
-  MessageSquare, Settings, Phone, UserPlus,
+  MessageSquare, Settings, Phone, UserPlus, Landmark,
 } from "lucide-react";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 const nav = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/", label: "Project Manager", icon: LayoutDashboard },
   { href: "/projects", label: "Projects", icon: FolderKanban },
+  { href: "/portfolio", label: "Passive Income Portfolio", icon: Landmark },
   { href: "/contractors", label: "Contractors", icon: HardHat },
   { href: "/invoices", label: "Invoices", icon: FileText },
   { href: "/communications", label: "Communications", icon: MessageSquare },
@@ -27,8 +27,8 @@ export function Sidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 w-64 bg-slate-900 text-slate-200 flex flex-col z-30">
       <div className="h-20 flex items-center gap-3 px-4 border-b border-slate-700/50">
-        <Image
-          src="/ProjectManagerLogo.png"
+        <img
+          src="/ProjectManagerLogo.svg"
           alt="Reinnovation Project Manager"
           width={48}
           height={48}

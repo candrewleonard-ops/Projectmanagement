@@ -7,7 +7,8 @@ import {
   ArrowLeft, MapPin, DollarSign, Calendar, Users, CheckCircle2,
   Clock, AlertTriangle, Camera, Box, MessageSquare, Phone,
   FileText, ExternalLink, Upload, Ban, Shield, Edit3, Trash2,
-  Save, X, Key, Zap, Droplets, Flame, Send,
+  Save, X, Key, Zap, Droplets, Flame, Send, ListChecks, Plus,
+  Eye, EyeOff,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { formatCurrency, formatDate, statusColor, cn, progressPercent, formatRelativeTime } from "@/lib/utils";
@@ -138,6 +139,9 @@ export default function ProjectDetailPage() {
         <span className="flex items-center gap-1.5 text-red-600"><AlertTriangle size={14} /> {blockedTasks.length} Blocked</span>
         <span className="flex items-center gap-1.5 text-slate-600"><Users size={14} /> {projectContractors.length} Contractors</span>
       </div>
+
+      {/* This Week */}
+      <ThisWeekSection projectId={project.id} />
 
       {/* Tabs */}
       <div className="border-b border-slate-200">
@@ -463,6 +467,95 @@ function InvoicesTab({ invoices, store, projectId }: { invoices: any[]; store: a
           </div>
         );
       })}</div>
+    </div>
+  );
+}
+
+function ThisWeekSection({ projectId }: { projectId: string }) {
+  const store = useStore();
+  const todos = store.getProjectWeeklyTodos(projectId);
+  const [newText, setNewText] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  const handleAdd = () => {
+    if (!newText.trim()) return;
+    store.addWeeklyTodo({
+      id: `todo-${Date.now()}`,
+      projectId,
+      text: newText.trim(),
+      hiddenFromDashboard: false,
+      createdAt: new Date().toISOString(),
+    });
+    setNewText("");
+    setAdding(false);
+  };
+
+  const toggleDashboardVisibility = (id: string, currentlyHidden: boolean) => {
+    store.updateWeeklyTodo(id, { hiddenFromDashboard: !currentlyHidden });
+  };
+
+  const visible = todos.filter((t) => !t.hiddenFromDashboard);
+  const hidden = todos.filter((t) => t.hiddenFromDashboard);
+
+  return (
+    <div className="stat-card">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+          <ListChecks size={16} className="text-blue-600" /> This Week
+          <span className="text-xs text-slate-400 font-normal">&middot; synced to dashboard</span>
+        </h3>
+        <button onClick={() => setAdding(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition">
+          <Plus size={12} /> Add Item
+        </button>
+      </div>
+
+      {adding && (
+        <div className="mb-3 flex gap-2">
+          <input type="text" value={newText} onChange={(e) => setNewText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") { setAdding(false); setNewText(""); } }}
+            placeholder="What needs to happen this week?" autoFocus
+            className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+          <button onClick={handleAdd} className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Add</button>
+          <button onClick={() => { setAdding(false); setNewText(""); }} className="px-3 py-2 text-slate-500 hover:bg-slate-100 rounded-lg text-sm">Cancel</button>
+        </div>
+      )}
+
+      {todos.length === 0 && !adding && (
+        <p className="text-sm text-slate-400 py-3">No items yet. Click &quot;Add Item&quot; to create one.</p>
+      )}
+
+      {visible.length > 0 && (
+        <div className="space-y-1.5">
+          {visible.map((todo) => (
+            <div key={todo.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 group">
+              <Eye size={14} className="text-blue-500 flex-shrink-0" />
+              <span className="text-sm text-slate-700 flex-1">{todo.text}</span>
+              <button onClick={() => toggleDashboardVisibility(todo.id, false)}
+                className="text-xs text-slate-400 hover:text-amber-600 opacity-0 group-hover:opacity-100 transition">Hide from dashboard</button>
+              <button onClick={() => store.deleteWeeklyTodo(todo.id)}
+                className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition"><Trash2 size={12} /></button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {hidden.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-slate-100">
+          <p className="text-xs text-slate-400 mb-2">Hidden from dashboard ({hidden.length})</p>
+          <div className="space-y-1.5">
+            {hidden.map((todo) => (
+              <div key={todo.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 group opacity-70">
+                <EyeOff size={14} className="text-slate-400 flex-shrink-0" />
+                <span className="text-sm text-slate-600 line-through flex-1">{todo.text}</span>
+                <button onClick={() => toggleDashboardVisibility(todo.id, true)}
+                  className="text-xs text-slate-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition">Show on dashboard</button>
+                <button onClick={() => store.deleteWeeklyTodo(todo.id)}
+                  className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition"><Trash2 size={12} /></button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

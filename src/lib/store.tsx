@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import {
   Project, Contractor, TaskItem, ExpenseItem, Invoice,
   Communication, Folder, User, Organization, ProjectPhoto, ThreeDRender,
+  Investment, RentalProperty, NoteInvestment, WorkOrder, WeeklyTodo,
 } from "./types";
 import {
   projects as defaultProjects,
@@ -41,6 +42,8 @@ interface StoreState {
   users: User[];
   organization: Organization;
   vitalInfos: VitalInfo[];
+  investments: Investment[];
+  weeklyTodos: WeeklyTodo[];
 }
 
 interface StoreActions {
@@ -76,6 +79,22 @@ interface StoreActions {
   // Vital Info
   getVitalInfo: (projectId: string) => VitalInfo;
   updateVitalInfo: (projectId: string, updates: Partial<VitalInfo>) => void;
+  // Investments
+  addInvestment: (investment: Investment) => void;
+  updateInvestment: (id: string, updates: Partial<RentalProperty> | Partial<NoteInvestment>) => void;
+  deleteInvestment: (id: string) => void;
+  getInvestment: (id: string) => Investment | undefined;
+  getRentalProperties: () => RentalProperty[];
+  getNoteInvestments: () => NoteInvestment[];
+  addWorkOrder: (investmentId: string, workOrder: WorkOrder) => void;
+  updateWorkOrder: (investmentId: string, workOrderId: string, updates: Partial<WorkOrder>) => void;
+  deleteWorkOrder: (investmentId: string, workOrderId: string) => void;
+  // Weekly Todos
+  addWeeklyTodo: (todo: WeeklyTodo) => void;
+  updateWeeklyTodo: (id: string, updates: Partial<WeeklyTodo>) => void;
+  deleteWeeklyTodo: (id: string) => void;
+  getProjectWeeklyTodos: (projectId: string) => WeeklyTodo[];
+  getVisibleWeeklyTodos: () => WeeklyTodo[];
   // Helpers
   getProject: (id: string) => Project | undefined;
   getContractor: (id: string) => Contractor | undefined;
@@ -100,7 +119,11 @@ function loadState(): StoreState {
   if (typeof window === "undefined") return getDefaultState();
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Merge with defaults so newly-added fields (e.g. investments) are never undefined
+      return { ...getDefaultState(), ...parsed };
+    }
   } catch {}
   return getDefaultState();
 }
@@ -117,6 +140,8 @@ function getDefaultState(): StoreState {
     users: defaultUsers,
     organization: defaultOrg,
     vitalInfos: [],
+    investments: [],
+    weeklyTodos: [],
   };
 }
 
@@ -162,6 +187,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       tasks: s.tasks.filter((t) => t.projectId !== id),
       expenses: s.expenses.filter((e) => e.projectId !== id),
       folders: s.folders.map((f) => ({ ...f, projectIds: f.projectIds.filter((pid) => pid !== id) })),
+      weeklyTodos: (s.weeklyTodos ?? []).filter((t) => t.projectId !== id),
     })),
     // Contractors
     addContractor: (c) => update((s) => ({ ...s, contractors: [...s.contractors, c] })),
@@ -233,6 +259,55 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
       return { ...s, vitalInfos: [...s.vitalInfos, { projectId, electricCompany: "", electricAccount: "", waterCompany: "", waterAccount: "", gasCompany: "", gasAccount: "", keyLocation: "", notes: "", ...updates }] };
     }),
+    // Investments
+    addInvestment: (inv) => update((s) => ({ ...s, investments: [...(s.investments ?? []), inv] })),
+    updateInvestment: (id, u) => update((s) => ({
+      ...s,
+      investments: (s.investments ?? []).map((inv) => inv.id === id ? { ...inv, ...u } as Investment : inv),
+    })),
+    deleteInvestment: (id) => update((s) => ({
+      ...s,
+      investments: (s.investments ?? []).filter((inv) => inv.id !== id),
+    })),
+    getInvestment: (id) => (state.investments ?? []).find((inv) => inv.id === id),
+    getRentalProperties: () => (state.investments ?? []).filter((inv): inv is RentalProperty => inv.type === "rental"),
+    getNoteInvestments: () => (state.investments ?? []).filter((inv): inv is NoteInvestment => inv.type === "note"),
+    addWorkOrder: (investmentId, wo) => update((s) => ({
+      ...s,
+      investments: s.investments.map((inv) =>
+        inv.id === investmentId && inv.type === "rental"
+          ? { ...inv, workOrders: [...inv.workOrders, wo] }
+          : inv
+      ),
+    })),
+    updateWorkOrder: (investmentId, woId, updates) => update((s) => ({
+      ...s,
+      investments: s.investments.map((inv) =>
+        inv.id === investmentId && inv.type === "rental"
+          ? { ...inv, workOrders: (inv as RentalProperty).workOrders.map((wo) => wo.id === woId ? { ...wo, ...updates } : wo) }
+          : inv
+      ),
+    })),
+    deleteWorkOrder: (investmentId, woId) => update((s) => ({
+      ...s,
+      investments: s.investments.map((inv) =>
+        inv.id === investmentId && inv.type === "rental"
+          ? { ...inv, workOrders: (inv as RentalProperty).workOrders.filter((wo) => wo.id !== woId) }
+          : inv
+      ),
+    })),
+    // Weekly Todos
+    addWeeklyTodo: (t) => update((s) => ({ ...s, weeklyTodos: [...(s.weeklyTodos ?? []), t] })),
+    updateWeeklyTodo: (id, u) => update((s) => ({
+      ...s,
+      weeklyTodos: (s.weeklyTodos ?? []).map((t) => t.id === id ? { ...t, ...u } : t),
+    })),
+    deleteWeeklyTodo: (id) => update((s) => ({
+      ...s,
+      weeklyTodos: (s.weeklyTodos ?? []).filter((t) => t.id !== id),
+    })),
+    getProjectWeeklyTodos: (pid) => (state.weeklyTodos ?? []).filter((t) => t.projectId === pid),
+    getVisibleWeeklyTodos: () => (state.weeklyTodos ?? []).filter((t) => !t.hiddenFromDashboard),
     // Helpers
     getProject: (id) => state.projects.find((p) => p.id === id),
     getContractor: (id) => state.contractors.find((c) => c.id === id),

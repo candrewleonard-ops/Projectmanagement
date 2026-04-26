@@ -1,13 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import { Camera, Mail, ExternalLink } from "lucide-react";
 
 export default function ContactPage() {
   return (
     <div className="max-w-2xl mx-auto py-12 fade-in">
       <div className="text-center mb-8">
-        <Image src="/ProjectManagerLogo.png" alt="Reinnovation Project Manager" width={80} height={80} className="mx-auto mb-4 rounded-2xl" />
+        <img src="/ProjectManagerLogo.svg" alt="Reinnovation Project Manager" width={80} height={80} className="mx-auto mb-4 rounded-2xl" />
         <h1 className="text-3xl font-bold text-slate-900">Reinnovation Homes</h1>
         <p className="text-slate-500 mt-2">Project Manager</p>
       </div>

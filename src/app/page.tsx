@@ -1,18 +1,26 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import {
   FolderKanban, TrendingUp, DollarSign, AlertTriangle,
-  ArrowRight, MapPin, CheckCircle2, Clock, Ban,
+  ArrowRight, MapPin, ListChecks,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { formatCurrency, progressPercent, cn } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 import { BudgetChart } from "@/components/BudgetChart";
+import { WeeklyTodo } from "@/lib/types";
 
 export default function Dashboard() {
   const store = useStore();
   const activeProjects = store.getActiveProjects();
-  const topExpenses = store.getTopExpenses(8);
+  const topExpenses = useMemo(() => {
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return [...store.expenses]
+      .filter((e) => new Date(e.purchasedDate).getTime() >= thirtyDaysAgo)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 8);
+  }, [store.expenses]);
   const totalPortfolioValue = store.projects.reduce((s, p) => s + p.estimatedARV, 0);
   const totalSpent = store.projects.reduce((s, p) => s + p.totalSpent, 0);
   const totalBudget = store.projects.reduce((s, p) => s + p.totalBudget, 0);
@@ -24,7 +32,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Project Manager</h1>
         <p className="text-sm text-slate-500 mt-1">Welcome back, Chris. You have {hotTasks.length} critical items and {unreadComms} unread messages.</p>
       </div>
 
@@ -71,40 +79,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-4">
-          <div className="stat-card">
-            <h3 className="text-sm font-semibold text-slate-700 mb-3">Task Overview</h3>
-            <div className="space-y-2.5">
-              <TaskRow icon={<Ban size={14} />} label="Blocked" count={store.tasks.filter(t => t.status === "blocked").length} color="text-red-600 bg-red-50" />
-              <TaskRow icon={<Clock size={14} />} label="In Progress" count={store.tasks.filter(t => t.status === "in_progress").length} color="text-sky-600 bg-sky-50" />
-              <TaskRow icon={<Clock size={14} />} label="Scheduled" count={scheduledTasks} color="text-violet-600 bg-violet-50" />
-              <TaskRow icon={<CheckCircle2 size={14} />} label="Completed" count={completedTasks} color="text-emerald-600 bg-emerald-50" />
-            </div>
-          </div>
-          <div className="stat-card">
-            <h3 className="text-sm font-semibold text-slate-700 mb-3">Project Library</h3>
-            <div className="space-y-2">
-              {store.folders.map((folder) => (
-                <Link key={folder.id} href={`/projects?folder=${folder.id}`} className="flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-50 transition group">
-                  <div className="flex items-center gap-3">
-                    <span className="w-3 h-3 rounded-full" style={{ background: folder.color }}></span>
-                    <span className="text-sm font-medium text-slate-700">{folder.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400">{folder.projectIds.length}</span>
-                    <ArrowRight size={14} className="text-slate-300 group-hover:text-blue-500 transition" />
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          {/* Right column placeholder for future widgets */}
-        </div>
-      </div>
+      <ThisWeekDashboard />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="stat-card">
@@ -112,65 +87,29 @@ export default function Dashboard() {
           <BudgetChart projects={activeProjects} />
         </div>
         <div className="stat-card">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Highest Expense Items</h2>
-          <div className="space-y-3">
-            {topExpenses.map((exp, i) => {
-              const proj = store.getProject(exp.projectId);
-              return (
-                <div key={exp.id} className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-slate-300 w-5 text-right">{i + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-800 truncate">{exp.description}</p>
-                    <p className="text-xs text-slate-400">{proj?.name} &middot; {exp.category}</p>
-                  </div>
-                  <span className="text-sm font-semibold text-slate-900">{formatCurrency(exp.total)}</span>
-                </div>
-              );
-            })}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-slate-900">Highest Expense Items</h2>
+            <span className="text-xs text-slate-400">Last 30 days</span>
           </div>
-        </div>
-      </div>
-
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-slate-900">Active Projects</h2>
-          <Link href="/projects" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">View All <ArrowRight size={14} /></Link>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {activeProjects.map((project) => {
-            const pTasks = store.getProjectTasks(project.id);
-            const completed = pTasks.filter((t) => t.status === "completed").length;
-            const progress = progressPercent(project.totalSpent, project.totalBudget);
-            const overBudget = project.totalSpent > project.totalBudget && project.totalBudget > 0;
-            const hasHot = pTasks.some((t) => t.priority === "critical" && (t.status === "in_progress" || t.status === "blocked"));
-            return (
-              <Link key={project.id} href={`/projects/${project.id}`} className={cn("stat-card group cursor-pointer", overBudget && "ring-2 ring-red-300")}>
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 transition">{project.name}</h3>
-                    <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5"><MapPin size={11} /> {project.address.city}, {project.address.state}</p>
+          {topExpenses.length === 0 ? (
+            <p className="text-sm text-slate-400 py-3">No expenses in the last 30 days.</p>
+          ) : (
+            <div className="space-y-3">
+              {topExpenses.map((exp, i) => {
+                const proj = store.getProject(exp.projectId);
+                return (
+                  <div key={exp.id} className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-slate-300 w-5 text-right">{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-800 truncate">{exp.description}</p>
+                      <p className="text-xs text-slate-400">{proj?.name} &middot; {exp.category}</p>
+                    </div>
+                    <span className="text-sm font-semibold text-slate-900">{formatCurrency(exp.total)}</span>
                   </div>
-                  {(hasHot || overBudget) && <span className={cn("w-3 h-3 rounded-full heat-pulse", overBudget ? "bg-red-500" : "bg-red-500")}></span>}
-                </div>
-                <div className="mt-3">
-                  <div className="flex justify-between text-xs text-slate-500 mb-1">
-                    <span>Budget</span>
-                    <span className={overBudget ? "text-red-600 font-semibold" : ""}>{overBudget ? `${progress}% OVER` : `${progress}%`}</span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div className={cn("h-full rounded-full", overBudget ? "bg-red-500" : progress > 70 ? "bg-amber-500" : "bg-blue-500")} style={{ width: `${Math.min(progress, 100)}%` }}></div>
-                  </div>
-                  {overBudget && (
-                    <p className="text-xs text-red-600 font-medium mt-1">Over budget by {formatCurrency(project.totalSpent - project.totalBudget)}</p>
-                  )}
-                  <div className="flex justify-between mt-2 text-xs text-slate-500">
-                    <span>{formatCurrency(project.totalSpent)} spent</span>
-                    <span>{completed}/{pTasks.length} tasks</span>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -195,12 +134,84 @@ function StatCard({ icon, label, value, sub, color, pulse }: {
   );
 }
 
-function TaskRow({ icon, label, count, color }: { icon: React.ReactNode; label: string; count: number; color: string }) {
+function ThisWeekDashboard() {
+  const store = useStore();
+  const activeProjects = store.getActiveProjects();
+  const visibleTodos = store.getVisibleWeeklyTodos();
+  const [confirming, setConfirming] = useState<WeeklyTodo | null>(null);
+
+  // Group todos by project (only active projects)
+  const activeProjectIds = new Set(activeProjects.map((p) => p.id));
+  const grouped = new Map<string, WeeklyTodo[]>();
+  for (const todo of visibleTodos) {
+    if (!activeProjectIds.has(todo.projectId)) continue;
+    const existing = grouped.get(todo.projectId) || [];
+    existing.push(todo);
+    grouped.set(todo.projectId, existing);
+  }
+
+  const handleCheck = () => {
+    if (!confirming) return;
+    store.updateWeeklyTodo(confirming.id, { hiddenFromDashboard: true });
+    setConfirming(null);
+  };
+
   return (
-    <div className="flex items-center gap-3">
-      <div className={cn("w-7 h-7 rounded-md flex items-center justify-center", color)}>{icon}</div>
-      <span className="text-sm text-slate-700 flex-1">{label}</span>
-      <span className="text-sm font-semibold text-slate-900">{count}</span>
+    <div className="stat-card">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+          <ListChecks size={16} className="text-blue-600" /> This Week
+        </h3>
+        <span className="text-xs text-slate-400">{visibleTodos.length} item{visibleTodos.length === 1 ? "" : "s"}</span>
+      </div>
+
+      {grouped.size === 0 ? (
+        <div className="py-6 text-center">
+          <p className="text-sm text-slate-400">No items for this week.</p>
+          <p className="text-xs text-slate-400 mt-1">Add items from each project&apos;s page.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {activeProjects.map((project) => {
+            const todos = grouped.get(project.id);
+            if (!todos || todos.length === 0) return null;
+            return (
+              <div key={project.id}>
+                <Link href={`/projects/${project.id}`} className="flex items-center gap-2 mb-2 group">
+                  <MapPin size={12} className="text-slate-400" />
+                  <span className="text-xs font-semibold text-slate-600 group-hover:text-blue-600 transition">{project.name}</span>
+                  <span className="text-xs text-slate-400">&middot; {project.address.city}, {project.address.state}</span>
+                </Link>
+                <div className="space-y-1.5">
+                  {todos.map((todo) => (
+                    <label key={todo.id} className="flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-50 transition cursor-pointer">
+                      <input type="checkbox" checked={false}
+                        onChange={() => setConfirming(todo)}
+                        className="mt-0.5 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                      <span className="text-sm text-slate-700 flex-1">{todo.text}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {confirming && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setConfirming(null)}>
+          <div className="bg-white rounded-2xl p-6 shadow-2xl max-w-md" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Are you sure?</h3>
+            <p className="text-sm text-slate-600 mb-1">Mark this as done and remove from the dashboard?</p>
+            <p className="text-sm text-slate-800 font-medium mb-4 p-3 bg-slate-50 rounded-lg">&ldquo;{confirming.text}&rdquo;</p>
+            <p className="text-xs text-slate-500 mb-4">It will remain visible on the project&apos;s page.</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setConfirming(null)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg font-medium">No, keep it</button>
+              <button onClick={handleCheck} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">Yes, mark done</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
