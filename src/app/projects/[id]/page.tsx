@@ -163,7 +163,7 @@ export default function ProjectDetailPage() {
         {activeTab === "tasks" && <TasksTab tasks={projectTasks} />}
         {activeTab === "expenses" && <ExpensesTab expenses={projectExpenses} />}
         {activeTab === "vital" && <VitalInfoTab projectId={project.id} vitalInfo={vitalInfo} store={store} />}
-        {activeTab === "photos" && <PhotosTab photos={project.photos} />}
+        {activeTab === "photos" && <PhotosTab photos={project.photos} projectId={project.id} store={store} />}
         {activeTab === "renders" && <RendersTab renders={project.renders} />}
         {activeTab === "contractors" && (
           <div>
@@ -398,13 +398,108 @@ function ExpensesTab({ expenses }: { expenses: any[] }) {
   );
 }
 
-function PhotosTab({ photos }: { photos: any[] }) {
+function PhotosTab({ photos, projectId, store }: { photos: any[]; projectId: string; store: any }) {
+  const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
+  const [captionInput, setCaptionInput] = useState("");
+  const [showCaptionModal, setShowCaptionModal] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setPendingFiles(Array.from(files));
+    setCaptionInput("");
+    setShowCaptionModal(true);
+    e.target.value = "";
+  };
+
+  const handleUpload = () => {
+    pendingFiles.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const base64 = ev.target?.result as string;
+        const newPhoto = {
+          id: `photo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          url: base64,
+          caption: captionInput || file.name,
+          uploadedAt: new Date().toISOString(),
+          uploadedBy: "current_user",
+        };
+        store.updateProject(projectId, { photos: [...(store.getProject(projectId)?.photos || []), newPhoto] });
+      };
+      reader.readAsDataURL(file);
+    });
+    setShowCaptionModal(false);
+    setPendingFiles([]);
+    setCaptionInput("");
+  };
+
+  const handleDelete = (photoId: string) => {
+    const updated = photos.filter((p) => p.id !== photoId);
+    store.updateProject(projectId, { photos: updated });
+    setViewingPhoto(null);
+  };
+
   return (
     <div>
-      <div className="flex justify-between items-center mb-4"><h3 className="text-sm font-semibold text-slate-700">Project Photos</h3><button className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"><Upload size={14} /> Upload Photos</button></div>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-sm font-semibold text-slate-700">Project Photos</h3>
+        <label className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 cursor-pointer">
+          <Upload size={14} /> Upload Photos
+          <input type="file" accept="image/*" multiple className="hidden" onChange={handleFileSelect} />
+        </label>
+      </div>
+
+      {showCaptionModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCaptionModal(false)}>
+          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h4 className="text-lg font-semibold text-slate-900 mb-2">Upload {pendingFiles.length} Photo{pendingFiles.length > 1 ? "s" : ""}</h4>
+            <p className="text-sm text-slate-500 mb-4">Add an optional caption for {pendingFiles.length > 1 ? "these photos" : "this photo"}.</p>
+            <input
+              type="text"
+              placeholder="Caption (optional)"
+              value={captionInput}
+              onChange={(e) => setCaptionInput(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoFocus
+              onKeyDown={(e) => e.key === "Enter" && handleUpload()}
+            />
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setShowCaptionModal(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+              <button onClick={handleUpload} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Upload</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewingPhoto && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50" onClick={() => setViewingPhoto(null)}>
+          <button onClick={() => setViewingPhoto(null)} className="absolute top-4 right-4 text-white hover:text-slate-300"><X size={28} /></button>
+          <button onClick={() => handleDelete(viewingPhoto)} className="absolute top-4 left-4 text-red-400 hover:text-red-300 flex items-center gap-1 text-sm"><Trash2 size={16} /> Delete</button>
+          <img src={photos.find((p) => p.id === viewingPhoto)?.url} alt="" className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg" onClick={(e) => e.stopPropagation()} />
+          <p className="absolute bottom-6 text-white text-sm bg-black/60 px-4 py-2 rounded-lg">{photos.find((p) => p.id === viewingPhoto)?.caption}</p>
+        </div>
+      )}
+
       {photos.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{photos.map((p) => (<div key={p.id} className="stat-card p-3"><div className="aspect-[4/3] bg-slate-200 rounded-lg flex items-center justify-center mb-2"><Camera size={32} className="text-slate-400" /></div><p className="text-sm font-medium text-slate-800">{p.caption}</p><p className="text-xs text-slate-400">{formatDate(p.uploadedAt)}</p></div>))}</div>
-      ) : (<div className="stat-card flex flex-col items-center py-12"><Camera size={48} className="text-slate-300 mb-3" /><p className="text-sm text-slate-400">No photos yet</p></div>)}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {photos.map((p) => (
+            <div key={p.id} className="stat-card p-3 cursor-pointer hover:shadow-md transition" onClick={() => setViewingPhoto(p.id)}>
+              <div className="aspect-[4/3] bg-slate-100 rounded-lg overflow-hidden mb-2">
+                <img src={p.url} alt={p.caption} className="w-full h-full object-cover" />
+              </div>
+              <p className="text-sm font-medium text-slate-800 truncate">{p.caption}</p>
+              <p className="text-xs text-slate-400">{formatDate(p.uploadedAt)}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="stat-card flex flex-col items-center py-12">
+          <Camera size={48} className="text-slate-300 mb-3" />
+          <p className="text-sm text-slate-400">No photos yet</p>
+          <p className="text-xs text-slate-300 mt-1">Click &ldquo;Upload Photos&rdquo; to add project images</p>
+        </div>
+      )}
     </div>
   );
 }

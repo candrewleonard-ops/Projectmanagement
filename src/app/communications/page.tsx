@@ -26,8 +26,8 @@ function CommunicationsContent() {
   const [composeFor, setComposeFor] = useState<string | null>(null);
   const [composeType, setComposeType] = useState<"sms" | "call">("sms");
   const [messageText, setMessageText] = useState("");
+  const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
-  const [scheduleAmPm, setScheduleAmPm] = useState<"AM" | "PM">("AM");
   const [showSchedule, setShowSchedule] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [editingNote, setEditingNote] = useState<string | null>(null);
@@ -57,6 +57,24 @@ function CommunicationsContent() {
       timestamp: new Date().toISOString(), read: true,
     });
     setMessageText("");
+    setComposeFor(null);
+  };
+
+  const handleSchedule = () => {
+    if (!messageText.trim() || !composeFor || !scheduleDate || !scheduleTime) return;
+    const scheduledFor = `${scheduleDate}T${scheduleTime}:00`;
+    store.addCommunication({
+      id: `comm-${Date.now()}`, contractorId: composeFor,
+      type: composeType, direction: "outbound", content: messageText,
+      timestamp: new Date().toISOString(), read: true,
+      scheduledFor,
+      ...(composeType === "call" ? { callStatus: "scheduled" as const } : {}),
+    });
+    setMessageText("");
+    setScheduleDate("");
+    setScheduleTime("");
+    setShowSchedule(false);
+    setComposeFor(null);
   };
 
   const openCompose = (contractorId: string, type: "sms" | "call") => {
@@ -181,21 +199,21 @@ function CommunicationsContent() {
               ) : (
                 <div>
                   <textarea value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Type a message..." className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm resize-none h-16 mb-2" />
-                  <div className="flex items-center gap-2">
-                    <button onClick={handleSend} className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition"><Send size={12} /> Send</button>
-                    <button onClick={() => setShowSchedule(!showSchedule)} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition", showSchedule ? "bg-violet-100 text-violet-700" : "bg-slate-200 text-slate-600")}><Clock size={12} /> Schedule</button>
-                    {showSchedule && (
-                      <>
-                        <input type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} className="border border-slate-200 rounded px-2 py-1 text-sm" />
-                        <div className="flex border border-slate-200 rounded overflow-hidden">
-                          <button onClick={() => setScheduleAmPm("AM")} className={cn("px-2 py-1 text-xs", scheduleAmPm === "AM" ? "bg-blue-100 text-blue-700" : "text-slate-500")}>AM</button>
-                          <button onClick={() => setScheduleAmPm("PM")} className={cn("px-2 py-1 text-xs", scheduleAmPm === "PM" ? "bg-blue-100 text-blue-700" : "text-slate-500")}>PM</button>
-                        </div>
-                        <button className="px-3 py-1 bg-violet-600 text-white rounded text-xs hover:bg-violet-700">Schedule</button>
-                      </>
-                    )}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button onClick={handleSend} className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition"><Send size={12} /> Send Now</button>
+                    <button onClick={() => setShowSchedule(!showSchedule)} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition", showSchedule ? "bg-violet-100 text-violet-700" : "bg-slate-100 text-slate-600 hover:bg-slate-200")}><Calendar size={12} /> Schedule for Later</button>
                   </div>
-                  <p className="text-[10px] text-slate-400 mt-2">Powered by Twilio</p>
+                  {showSchedule && (
+                    <div className="mt-3 p-3 bg-violet-50 border border-violet-200 rounded-lg">
+                      <p className="text-xs font-medium text-violet-700 mb-2">Schedule this message:</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <input type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} className="border border-violet-200 rounded-lg px-3 py-1.5 text-sm bg-white" />
+                        <input type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} className="border border-violet-200 rounded-lg px-3 py-1.5 text-sm bg-white" />
+                        <button onClick={handleSchedule} disabled={!scheduleDate || !scheduleTime || !messageText.trim()} className="flex items-center gap-1.5 px-4 py-1.5 bg-violet-600 text-white rounded-lg text-sm hover:bg-violet-700 transition disabled:opacity-50 disabled:cursor-not-allowed"><Clock size={12} /> Schedule</button>
+                        <button onClick={() => setShowSchedule(false)} className="px-3 py-1.5 text-sm text-slate-500 hover:text-slate-700">Cancel</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -220,6 +238,7 @@ function CommunicationsContent() {
                   <span className="text-xs text-slate-400 w-24 capitalize">{comm.type} &middot; {comm.direction === "inbound" ? "In" : "Out"}</span>
                   {comm.callStatus === "missed" && <span className="badge bg-red-100 text-red-700 text-[10px]">Missed</span>}
                   {comm.callStatus === "scheduled" && <span className="badge bg-violet-100 text-violet-700 text-[10px]">Scheduled</span>}
+                  {comm.scheduledFor && !comm.callStatus && <span className="badge bg-violet-100 text-violet-700 text-[10px]">Scheduled {formatDate(comm.scheduledFor)}</span>}
                   <p className="text-sm text-slate-600 flex-1 truncate">{comm.content.split("\n")[0]}</p>
                   <span className="text-xs text-slate-400 flex-shrink-0">{formatRelativeTime(comm.timestamp)}</span>
                   <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
