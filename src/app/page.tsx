@@ -119,14 +119,23 @@ export default function Dashboard() {
 function StatCard({ icon, label, value, sub, color, pulse }: {
   icon: React.ReactNode; label: string; value: string; sub: string; color: string; pulse?: boolean;
 }) {
-  const colors: Record<string, string> = { blue: "bg-blue-50 text-blue-600", emerald: "bg-emerald-50 text-emerald-600", violet: "bg-violet-50 text-violet-600", red: "bg-red-50 text-red-600" };
+  const iconBg: Record<string, string> = {
+    blue: "bg-gradient-to-br from-blue-500 to-blue-600 text-white",
+    emerald: "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white",
+    violet: "bg-gradient-to-br from-violet-500 to-violet-600 text-white",
+    red: "bg-gradient-to-br from-red-500 to-red-600 text-white",
+  };
+  const glowColor: Record<string, string> = {
+    blue: "shadow-blue-500/20", emerald: "shadow-emerald-500/20",
+    violet: "shadow-violet-500/20", red: "shadow-red-500/20",
+  };
   return (
-    <div className={cn("stat-card", pulse && "ring-2 ring-red-200")}>
+    <div className={cn("stat-card", pulse && "ring-2 ring-red-200 animate-pulse")}>
       <div className="flex items-center gap-3">
-        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", colors[color])}>{icon}</div>
+        <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shadow-lg", iconBg[color], glowColor[color])}>{icon}</div>
         <div>
-          <p className="text-xs text-slate-500">{label}</p>
-          <p className="text-xl font-bold text-slate-900">{value}</p>
+          <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">{label}</p>
+          <p className="text-xl font-bold text-slate-900 mt-0.5">{value}</p>
         </div>
       </div>
       <p className="text-xs text-slate-400 mt-2">{sub}</p>
