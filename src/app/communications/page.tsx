@@ -182,7 +182,7 @@ function HotTasksCommsContent() {
       </div>
 
       {/* CENTER - Main Content */}
-      <div className={cn("flex-1 overflow-auto space-y-5", openContactId && "max-w-[calc(100%-38rem)]")}>
+      <div className="flex-1 overflow-auto space-y-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Hot Tasks & Communications</h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -190,89 +190,126 @@ function HotTasksCommsContent() {
           </p>
         </div>
 
-        {/* Hot Tasks */}
+        {/* Hot Tasks - compact */}
         {hotTasks.length > 0 && (
           <div>
-            <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2"><AlertTriangle size={14} className="text-red-500" /> Hot Tasks</h2>
+            <h2 className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2"><AlertTriangle size={14} className="text-red-500" /> Hot Tasks</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {hotTasks.map((task) => {
+              {hotTasks.slice(0, 4).map((task) => {
                 const project = store.getProject(task.projectId);
                 const contractor = task.assignedContractorId ? store.getContractor(task.assignedContractorId) : null;
                 return (
                   <Link key={task.id} href={`/projects/${task.projectId}`}
-                    className={cn("stat-card py-3 px-4 flex items-start gap-3 hover:shadow-md transition group",
+                    className={cn("stat-card py-2 px-3 flex items-center gap-2 hover:shadow-md transition group",
                       task.status === "blocked" ? "border-red-200 bg-red-50/30" : "border-amber-200 bg-amber-50/30"
                     )}>
-                    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5",
+                    <div className={cn("w-6 h-6 rounded flex items-center justify-center flex-shrink-0",
                       task.status === "blocked" ? "bg-red-100" : "bg-amber-100"
                     )}>
-                      {task.status === "blocked" ? <Ban size={14} className="text-red-600" /> : <AlertTriangle size={14} className="text-amber-600" />}
+                      {task.status === "blocked" ? <Ban size={12} className="text-red-600" /> : <AlertTriangle size={12} className="text-amber-600" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 group-hover:text-blue-600 truncate">{task.title}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">{project?.name}</p>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <span className={cn("badge text-[10px]",
-                          task.status === "blocked" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
-                        )}>{task.status.replace("_", " ")}</span>
-                        <span className="badge text-[10px] bg-slate-100 text-slate-600">{task.priority}</span>
-                        {contractor && <span className="text-[10px] text-slate-400">{contractor.name}</span>}
-                        {task.scheduledDate && <span className="text-[10px] text-slate-400">{formatDate(task.scheduledDate)}</span>}
-                      </div>
+                      <p className="text-xs font-medium text-slate-900 group-hover:text-blue-600 truncate">{task.title}</p>
+                      <p className="text-[10px] text-slate-500 truncate">{project?.name} {contractor ? `· ${contractor.name}` : ""}</p>
                     </div>
-                    <ChevronRight size={14} className="text-slate-300 group-hover:text-blue-400 mt-1 flex-shrink-0" />
+                    <ChevronRight size={12} className="text-slate-300 flex-shrink-0" />
                   </Link>
                 );
               })}
             </div>
+            {hotTasks.length > 4 && (
+              <p className="text-[10px] text-slate-400 mt-1 text-center">+{hotTasks.length - 4} more hot tasks</p>
+            )}
           </div>
         )}
 
-        {/* Recent Communications by Project */}
-        <div>
-          <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2"><MessageSquare size={14} className="text-blue-500" /> Recent Communications</h2>
+        {/* Contacts Section */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="p-3 border-b border-slate-200">
+            <h2 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2"><Users size={14} /> Contacts</h2>
+            <div className="relative mb-2">
+              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input placeholder="Search contacts..." className="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" value={contactSearch} onChange={(e) => setContactSearch(e.target.value)} />
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {SPECIALTIES.map((s) => (
+                <button key={s} onClick={() => toggleFilter(s)}
+                  className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium transition",
+                    activeFilters.includes(s) ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                  )}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="max-h-64 overflow-auto divide-y divide-slate-100">
+            {filteredContractors.map((c) => (
+              <div key={c.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition cursor-pointer"
+                onClick={() => setOpenContactId(c.id)}>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
+                  {c.name.split(" ").map((n) => n[0]).join("")}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-slate-800">{c.name}</p>
+                  <p className="text-[10px] text-slate-400">{c.company}</p>
+                </div>
+                <div className="flex flex-wrap gap-0.5">
+                  {c.specialty.slice(0, 2).map((s) => (
+                    <span key={s} className="px-1.5 rounded text-[9px] bg-slate-100 text-slate-500">{s}</span>
+                  ))}
+                  {c.specialty.length > 2 && <span className="text-[9px] text-slate-400">+{c.specialty.length - 2}</span>}
+                </div>
+                <ChevronRight size={12} className="text-slate-300 flex-shrink-0" />
+              </div>
+            ))}
+            {filteredContractors.length === 0 && (
+              <div className="text-center py-6 text-slate-400 text-xs">No contacts found</div>
+            )}
+          </div>
+        </div>
+
+        {/* Recent Communications - squeezed */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-slate-200 flex items-center gap-2">
+            <MessageSquare size={14} className="text-blue-500" />
+            <h2 className="text-sm font-bold text-slate-700">Recent Communications</h2>
+          </div>
           {recentCommsByProject.length > 0 ? (
-            <div className="space-y-4">
+            <div className="max-h-52 overflow-auto divide-y divide-slate-100">
               {recentCommsByProject.map(({ project, recentContacts }) => (
-                <div key={project.id} className="stat-card p-0 overflow-hidden">
-                  <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                    <Link href={`/projects/${project.id}`} className="text-sm font-semibold text-slate-800 hover:text-blue-600 transition flex items-center gap-2">
+                <div key={project.id}>
+                  <div className="px-4 py-1.5 bg-slate-50 flex items-center justify-between">
+                    <Link href={`/projects/${project.id}`} className="text-xs font-semibold text-slate-700 hover:text-blue-600 transition">
                       {project.name}
-                      <ChevronRight size={13} className="text-slate-400" />
                     </Link>
-                    <span className="text-[10px] text-slate-400">{project.address.city}, {project.address.state}</span>
+                    <span className="text-[9px] text-slate-400">{project.address.city}, {project.address.state}</span>
                   </div>
-                  <div className="divide-y divide-slate-100">
-                    {recentContacts.map(([contractorId, lastComm]) => {
-                      const contractor = store.getContractor(contractorId);
-                      if (!contractor) return null;
-                      return (
-                        <div key={contractorId}
-                          onClick={() => setOpenContactId(contractorId)}
-                          className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50/40 transition cursor-pointer group">
-                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
-                            {contractor.name.split(" ").map((n) => n[0]).join("")}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-medium text-slate-800 group-hover:text-blue-600">{contractor.name}</p>
-                              <CommBadge comm={lastComm} />
-                            </div>
-                            <p className="text-xs text-slate-500 truncate mt-0.5">{formatCommPreview(lastComm)}</p>
-                          </div>
-                          <span className="text-[10px] text-slate-400 flex-shrink-0">{formatRelativeTime(lastComm.timestamp)}</span>
+                  {recentContacts.map(([contractorId, lastComm]) => {
+                    const contractor = store.getContractor(contractorId);
+                    if (!contractor) return null;
+                    return (
+                      <div key={contractorId}
+                        onClick={() => setOpenContactId(contractorId)}
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-blue-50/40 transition cursor-pointer">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0">
+                          {contractor.name.split(" ").map((n) => n[0]).join("")}
                         </div>
-                      );
-                    })}
-                  </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-slate-700">{contractor.name}</p>
+                          <p className="text-[10px] text-slate-500 truncate">{formatCommPreview(lastComm)}</p>
+                        </div>
+                        <CommBadge comm={lastComm} />
+                        <span className="text-[9px] text-slate-400 flex-shrink-0">{formatRelativeTime(lastComm.timestamp)}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               ))}
             </div>
           ) : (
-            <div className="stat-card flex flex-col items-center py-12">
-              <MessageSquare size={40} className="text-slate-300 mb-3" />
-              <p className="text-sm text-slate-400">No recent communications</p>
-              <p className="text-xs text-slate-300 mt-1">Messages and calls will appear here organized by project</p>
+            <div className="flex flex-col items-center py-8">
+              <MessageSquare size={28} className="text-slate-300 mb-2" />
+              <p className="text-xs text-slate-400">No recent communications</p>
             </div>
           )}
         </div>
