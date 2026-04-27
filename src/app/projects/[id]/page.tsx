@@ -340,28 +340,28 @@ function VitalInfoTab({ projectId, vitalInfo, store }: { projectId: string; vita
 }
 
 const DEFAULT_TASKS = [
-  { title: "Demo", category: "Demolition", days: 3 },
-  { title: "Foundation Work", category: "Foundation", days: 5 },
-  { title: "Framing Work", category: "Framing", days: 5 },
-  { title: "Roof", category: "Roofing", days: 5 },
-  { title: "Siding & Exterior", category: "Exterior", days: 4 },
-  { title: "Windows & Doors", category: "Exterior", days: 3 },
-  { title: "Plumbing (Rough-In)", category: "Plumbing", days: 4 },
-  { title: "Electrical (Rough-In)", category: "Electrical", days: 4 },
-  { title: "HVAC", category: "HVAC", days: 4 },
-  { title: "Insulation", category: "General", days: 2 },
-  { title: "Drywall Work", category: "Drywall", days: 5 },
-  { title: "Subfloors", category: "Flooring", days: 3 },
-  { title: "Flooring", category: "Flooring", days: 4 },
-  { title: "Kitchen Remodel", category: "Kitchen", days: 7 },
-  { title: "Bathroom Remodel", category: "Bathroom", days: 5 },
-  { title: "Outlets & Switches", category: "Electrical", days: 2 },
-  { title: "Ceiling Fans & Lights", category: "Electrical", days: 2 },
-  { title: "Paint By Room", category: "Painting", days: 5 },
-  { title: "Appliances", category: "Kitchen", days: 2 },
-  { title: "Landscaping & Exterior Cleanup", category: "Exterior", days: 3 },
-  { title: "Final Cleanup & Punch List", category: "General", days: 3 },
-  { title: "Final Inspection & QC", category: "General", days: 2 },
+  { title: "Demo", category: "Demolition", days: 2 },
+  { title: "Foundation Work", category: "Foundation", days: 2 },
+  { title: "Framing Work", category: "Framing", days: 2 },
+  { title: "Roof", category: "Roofing", days: 2 },
+  { title: "Siding & Exterior", category: "Exterior", days: 2 },
+  { title: "Windows & Doors", category: "Exterior", days: 1 },
+  { title: "Plumbing (Rough-In)", category: "Plumbing", days: 2 },
+  { title: "Electrical (Rough-In)", category: "Electrical", days: 2 },
+  { title: "HVAC", category: "HVAC", days: 2 },
+  { title: "Insulation", category: "General", days: 1 },
+  { title: "Drywall Work", category: "Drywall", days: 2 },
+  { title: "Subfloors", category: "Flooring", days: 1 },
+  { title: "Flooring", category: "Flooring", days: 2 },
+  { title: "Kitchen Remodel", category: "Kitchen", days: 3 },
+  { title: "Bathroom Remodel", category: "Bathroom", days: 2 },
+  { title: "Outlets & Switches", category: "Electrical", days: 1 },
+  { title: "Ceiling Fans & Lights", category: "Electrical", days: 1 },
+  { title: "Paint By Room", category: "Painting", days: 2 },
+  { title: "Appliances", category: "Kitchen", days: 1 },
+  { title: "Landscaping & Exterior Cleanup", category: "Exterior", days: 1 },
+  { title: "Final Cleanup & Punch List", category: "General", days: 1 },
+  { title: "Final Inspection & QC", category: "General", days: 1 },
 ];
 
 function addDays(dateStr: string, days: number): string {
@@ -488,20 +488,19 @@ function TasksTab({ tasks: projectTasks, projectId, store }: { tasks: any[]; pro
           <button onClick={handleAddSingle} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 transition">
             <Plus size={12} /> Add Task
           </button>
-          {projectTasks.length === 0 && (
-            <button onClick={handleAddDefaults} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition">
-              <Plus size={12} /> Add Default Renovation Tasks
-            </button>
-          )}
+          <button onClick={handleAddDefaults} className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition shadow-sm">
+            <ListChecks size={14} /> Create Scope of Work
+          </button>
         </div>
       </div>
 
       {sorted.length === 0 && (
-        <div className="stat-card flex flex-col items-center py-12">
-          <ListChecks size={48} className="text-slate-300 mb-3" />
-          <p className="text-sm text-slate-400 mb-2">No tasks yet</p>
-          <button onClick={handleAddDefaults} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-            <Plus size={14} /> Add Default Renovation Tasks ({DEFAULT_TASKS.length} items)
+        <div className="stat-card flex flex-col items-center py-16">
+          <ListChecks size={56} className="text-blue-200 mb-4" />
+          <p className="text-lg font-semibold text-slate-700 mb-1">No Scope of Work Yet</p>
+          <p className="text-sm text-slate-400 mb-5">Create a full renovation scope with {DEFAULT_TASKS.length} tasks across a 35-day timeline</p>
+          <button onClick={handleAddDefaults} className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+            <ListChecks size={16} /> Create Scope of Work
           </button>
         </div>
       )}
