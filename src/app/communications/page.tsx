@@ -30,6 +30,7 @@ function HotTasksCommsContent() {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [centerProjectId, setCenterProjectId] = useState<string | null>(null);
 
   const selectedProject = selectedProjectId ? store.getProject(selectedProjectId) : null;
   const projectContractors = useMemo(() => {
@@ -38,6 +39,14 @@ function HotTasksCommsContent() {
       .map((cid) => store.getContractor(cid))
       .filter(Boolean) as Contractor[];
   }, [selectedProject, store]);
+
+  const centerProject = centerProjectId ? store.getProject(centerProjectId) : null;
+  const centerProjectContractors = useMemo(() => {
+    if (!centerProject) return [];
+    return centerProject.contractorIds
+      .map((cid) => store.getContractor(cid))
+      .filter(Boolean) as Contractor[];
+  }, [centerProject, store]);
 
   const hotTasks = useMemo(() => {
     return store.tasks
@@ -208,6 +217,57 @@ function HotTasksCommsContent() {
               <div className="text-center py-6 text-slate-400 text-xs">No contacts found</div>
             )}
           </div>
+        </div>
+
+        {/* Project Contractors Lookup */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="p-3 border-b border-slate-200 flex items-center justify-between">
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2"><FolderKanban size={14} /> Project Contractors</h2>
+            <select
+              value={centerProjectId || ""}
+              onChange={(e) => setCenterProjectId(e.target.value || null)}
+              className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-[200px]"
+            >
+              <option value="">Select a project...</option>
+              {store.projects.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+          {centerProject ? (
+            <div>
+              <div className="max-h-48 overflow-auto divide-y divide-slate-100">
+                {centerProjectContractors.length === 0 ? (
+                  <div className="text-center py-6 text-slate-400 text-xs">No contractors assigned to this project</div>
+                ) : (
+                  centerProjectContractors.map((c) => (
+                    <div key={c.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
+                        {c.name.split(" ").map((n) => n[0]).join("")}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-slate-800">{c.name}</p>
+                        <p className="text-[10px] text-slate-400">{c.company}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-0.5">
+                        {c.specialty.slice(0, 2).map((s) => (
+                          <span key={s} className="px-1.5 rounded text-[9px] bg-slate-100 text-slate-500">{s}</span>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="p-2.5 border-t border-slate-200">
+                <button onClick={() => { setSelectedProjectId(centerProjectId); setShowAssignModal(true); }}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition">
+                  <UserPlus size={12} /> Assign New Contractors
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="py-6 text-center text-xs text-slate-400">Pick a project above to see its contractors</div>
+          )}
         </div>
 
         {/* Recent Communications - squeezed */}
