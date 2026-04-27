@@ -160,7 +160,7 @@ export default function ProjectDetailPage() {
 
       {/* Tab Content */}
       <div>
-        {activeTab === "tasks" && <TasksTab tasks={projectTasks} />}
+        {activeTab === "tasks" && <TasksTab tasks={projectTasks} projectId={project.id} store={store} />}
         {activeTab === "expenses" && <ExpensesTab expenses={projectExpenses} />}
         {activeTab === "vital" && <VitalInfoTab projectId={project.id} vitalInfo={vitalInfo} store={store} />}
         {activeTab === "photos" && <PhotosTab photos={project.photos} projectId={project.id} store={store} />}
@@ -339,44 +339,320 @@ function VitalInfoTab({ projectId, vitalInfo, store }: { projectId: string; vita
   );
 }
 
-function TasksTab({ tasks: projectTasks }: { tasks: any[] }) {
-  const groups = [
-    { label: "Blocked", tasks: projectTasks.filter((t) => t.status === "blocked"), color: "border-l-red-500" },
-    { label: "In Progress", tasks: projectTasks.filter((t) => t.status === "in_progress"), color: "border-l-sky-500" },
-    { label: "Scheduled (Upcoming)", tasks: projectTasks.filter((t) => t.status === "scheduled"), color: "border-l-violet-500" },
-    { label: "Completed & Verified", tasks: projectTasks.filter((t) => t.status === "completed"), color: "border-l-emerald-500" },
-  ];
+const DEFAULT_TASKS = [
+  { title: "Demo", category: "Demolition", days: 3 },
+  { title: "Foundation Work", category: "Foundation", days: 5 },
+  { title: "Framing Work", category: "Framing", days: 5 },
+  { title: "Roof", category: "Roofing", days: 5 },
+  { title: "Siding & Exterior", category: "Exterior", days: 4 },
+  { title: "Windows & Doors", category: "Exterior", days: 3 },
+  { title: "Plumbing (Rough-In)", category: "Plumbing", days: 4 },
+  { title: "Electrical (Rough-In)", category: "Electrical", days: 4 },
+  { title: "HVAC", category: "HVAC", days: 4 },
+  { title: "Insulation", category: "General", days: 2 },
+  { title: "Drywall Work", category: "Drywall", days: 5 },
+  { title: "Subfloors", category: "Flooring", days: 3 },
+  { title: "Flooring", category: "Flooring", days: 4 },
+  { title: "Kitchen Remodel", category: "Kitchen", days: 7 },
+  { title: "Bathroom Remodel", category: "Bathroom", days: 5 },
+  { title: "Outlets & Switches", category: "Electrical", days: 2 },
+  { title: "Ceiling Fans & Lights", category: "Electrical", days: 2 },
+  { title: "Paint By Room", category: "Painting", days: 5 },
+  { title: "Appliances", category: "Kitchen", days: 2 },
+  { title: "Landscaping & Exterior Cleanup", category: "Exterior", days: 3 },
+  { title: "Final Cleanup & Punch List", category: "General", days: 3 },
+  { title: "Final Inspection & QC", category: "General", days: 2 },
+];
+
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split("T")[0];
+}
+
+function TasksTab({ tasks: projectTasks, projectId, store }: { tasks: any[]; projectId: string; store: any }) {
+  const [expandedTask, setExpandedTask] = useState<string | null>(null);
+  const [photoUploading, setPhotoUploading] = useState<string | null>(null);
+
+  const projectContractors = store.contractors.filter((c: any) =>
+    store.getProject(projectId)?.contractorIds?.includes(c.id)
+  );
+  const otherContractors = store.contractors.filter((c: any) =>
+    !store.getProject(projectId)?.contractorIds?.includes(c.id)
+  );
+
+  const handleAddDefaults = () => {
+    const today = new Date().toISOString().split("T")[0];
+    let cumDays = 0;
+    DEFAULT_TASKS.forEach((dt) => {
+      const dueDate = addDays(today, cumDays + dt.days);
+      store.addTask({
+        id: `task_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        projectId,
+        title: dt.title,
+        description: "",
+        status: "not_started" as const,
+        priority: "medium" as const,
+        qualityCheck: "pending" as const,
+        orderConfirmed: false,
+        estimatedCost: 0,
+        actualCost: 0,
+        category: dt.category,
+        dueDate,
+        scheduledDate: addDays(today, cumDays),
+        notes: "",
+        photos: [],
+      });
+      cumDays += dt.days;
+    });
+  };
+
+  const handleAddSingle = () => {
+    store.addTask({
+      id: `task_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      projectId,
+      title: "",
+      description: "",
+      status: "not_started" as const,
+      priority: "medium" as const,
+      qualityCheck: "pending" as const,
+      orderConfirmed: false,
+      estimatedCost: 0,
+      actualCost: 0,
+      category: "General",
+      dueDate: addDays(new Date().toISOString().split("T")[0], 7),
+      notes: "",
+      photos: [],
+    });
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    store.deleteTask(taskId);
+  };
+
+  const handleUpdate = (taskId: string, updates: any) => {
+    store.updateTask(taskId, updates);
+  };
+
+  const handleTaskPhotoUpload = (taskId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const base64 = ev.target?.result as string;
+        const task = projectTasks.find((t: any) => t.id === taskId);
+        const newPhoto = {
+          id: `tph_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          url: base64,
+          caption: file.name,
+          uploadedAt: new Date().toISOString(),
+          uploadedBy: "current_user",
+        };
+        handleUpdate(taskId, { photos: [...(task?.photos || []), newPhoto] });
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  };
+
+  const removeTaskPhoto = (taskId: string, photoId: string) => {
+    const task = projectTasks.find((t: any) => t.id === taskId);
+    handleUpdate(taskId, { photos: (task?.photos || []).filter((p: any) => p.id !== photoId) });
+  };
+
+  const isDueSoon = (dueDate?: string) => {
+    if (!dueDate) return false;
+    const now = new Date();
+    const due = new Date(dueDate);
+    const diff = (due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    return diff <= 7 && diff >= -1;
+  };
+
+  const isOverdue = (dueDate?: string) => {
+    if (!dueDate) return false;
+    return new Date(dueDate) < new Date();
+  };
+
+  const sorted = [...projectTasks].sort((a, b) => {
+    const aDate = a.dueDate || a.scheduledDate || "9999";
+    const bDate = b.dueDate || b.scheduledDate || "9999";
+    return aDate.localeCompare(bDate);
+  });
+
   return (
-    <div className="space-y-6">
-      {groups.map((g) => g.tasks.length > 0 && (
-        <div key={g.label}>
-          <h3 className="text-sm font-semibold text-slate-700 mb-3">{g.label} ({g.tasks.length})</h3>
-          <div className="space-y-2">
-            {g.tasks.map((task: any) => (
-              <div key={task.id} className={cn("stat-card border-l-4 flex items-center gap-4", g.color)}>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium text-slate-900">{task.title}</h4>
-                    <span className={`badge ${statusColor(task.priority)}`}>{task.priority}</span>
-                    {task.qualityCheck === "passed" && <span className="badge bg-emerald-100 text-emerald-700 flex items-center gap-1"><Shield size={10} /> QC Passed</span>}
-                    {!task.orderConfirmed && task.status !== "completed" && <span className="badge bg-amber-100 text-amber-700">Order Not Confirmed</span>}
-                  </div>
-                  <p className="text-xs text-slate-500">{task.description}</p>
-                  <div className="flex items-center gap-4 mt-1.5 text-xs text-slate-400">
-                    <span>{task.category}</span>
-                    {task.scheduledDate && <span>Scheduled: {formatDate(task.scheduledDate)}</span>}
-                    {task.completedDate && <span>Completed: {formatDate(task.completedDate)}</span>}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-semibold text-slate-900">{formatCurrency(task.estimatedCost)}</p>
-                  {task.actualCost > 0 && <p className="text-xs text-slate-400">Actual: {formatCurrency(task.actualCost)}</p>}
-                </div>
-              </div>
-            ))}
-          </div>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-slate-700">Tasks & Work Orders ({projectTasks.length})</h3>
+        <div className="flex gap-2">
+          <button onClick={handleAddSingle} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 transition">
+            <Plus size={12} /> Add Task
+          </button>
+          {projectTasks.length === 0 && (
+            <button onClick={handleAddDefaults} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition">
+              <Plus size={12} /> Add Default Renovation Tasks
+            </button>
+          )}
         </div>
-      ))}
+      </div>
+
+      {sorted.length === 0 && (
+        <div className="stat-card flex flex-col items-center py-12">
+          <ListChecks size={48} className="text-slate-300 mb-3" />
+          <p className="text-sm text-slate-400 mb-2">No tasks yet</p>
+          <button onClick={handleAddDefaults} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+            <Plus size={14} /> Add Default Renovation Tasks ({DEFAULT_TASKS.length} items)
+          </button>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {sorted.map((task: any, idx: number) => {
+          const isExpanded = expandedTask === task.id;
+          const overdue = isOverdue(task.dueDate) && task.status !== "completed";
+          const dueSoon = isDueSoon(task.dueDate) && task.status !== "completed";
+          const contractor = task.assignedContractorId ? store.getContractor(task.assignedContractorId) : null;
+
+          return (
+            <div key={task.id} className={cn("stat-card border-l-4 transition",
+              task.status === "completed" ? "border-l-emerald-500 opacity-70" :
+              overdue ? "border-l-red-500 ring-1 ring-red-200" :
+              dueSoon ? "border-l-amber-500" :
+              task.status === "blocked" ? "border-l-red-500" :
+              task.status === "in_progress" ? "border-l-sky-500" :
+              "border-l-slate-300"
+            )}>
+              <div className="flex items-center gap-3 cursor-pointer" onClick={() => setExpandedTask(isExpanded ? null : task.id)}>
+                <span className="text-xs font-bold text-slate-300 w-5 text-center">{idx + 1}</span>
+                <div className="flex-1 min-w-0">
+                  {isExpanded ? (
+                    <input
+                      type="text"
+                      value={task.title}
+                      onChange={(e) => handleUpdate(task.id, { title: e.target.value })}
+                      onClick={(e) => e.stopPropagation()}
+                      placeholder="Task name..."
+                      className="w-full font-medium text-slate-900 border-b border-slate-200 pb-1 focus:outline-none focus:border-blue-400 text-sm bg-transparent"
+                    />
+                  ) : (
+                    <h4 className="font-medium text-slate-900 text-sm truncate">{task.title || "Untitled task"}</h4>
+                  )}
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    {task.dueDate && (
+                      <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded",
+                        overdue ? "bg-red-100 text-red-700" : dueSoon ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"
+                      )}>
+                        {overdue ? "OVERDUE" : dueSoon ? "DUE SOON" : ""} {formatDate(task.dueDate)}
+                      </span>
+                    )}
+                    <span className="text-[10px] text-slate-400">{task.category}</span>
+                    {contractor && <span className="text-[10px] text-blue-500">{contractor.name}</span>}
+                    {(task.photos?.length || 0) > 0 && <span className="text-[10px] text-slate-400"><Camera size={10} className="inline" /> {task.photos.length}</span>}
+                  </div>
+                </div>
+                <select
+                  value={task.status}
+                  onChange={(e) => { e.stopPropagation(); handleUpdate(task.id, { status: e.target.value, ...(e.target.value === "completed" ? { completedDate: new Date().toISOString().split("T")[0] } : {}) }); }}
+                  onClick={(e) => e.stopPropagation()}
+                  className={cn("text-[10px] font-medium rounded-full px-2 py-1 border-0 cursor-pointer",
+                    task.status === "completed" ? "bg-emerald-100 text-emerald-700" :
+                    task.status === "blocked" ? "bg-red-100 text-red-700" :
+                    task.status === "in_progress" ? "bg-sky-100 text-sky-700" :
+                    "bg-slate-100 text-slate-600"
+                  )}>
+                  <option value="not_started">Not Started</option>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="blocked">Blocked</option>
+                  <option value="completed">Completed</option>
+                </select>
+                <button onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
+                  className="p-1.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition"><Trash2 size={14} /></button>
+              </div>
+
+              {isExpanded && (
+                <div className="mt-3 pt-3 border-t border-slate-100 space-y-3" onClick={(e) => e.stopPropagation()}>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-medium text-slate-400 uppercase mb-1 block">Assigned Contractor</label>
+                      <select value={task.assignedContractorId || ""} onChange={(e) => handleUpdate(task.id, { assignedContractorId: e.target.value || undefined })}
+                        className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm">
+                        <option value="">Unassigned</option>
+                        {projectContractors.length > 0 && (
+                          <optgroup label="Project Contractors">
+                            {projectContractors.map((c: any) => <option key={c.id} value={c.id}>{c.name} — {c.specialty.join(", ")}</option>)}
+                          </optgroup>
+                        )}
+                        {otherContractors.length > 0 && (
+                          <optgroup label="Other Contractors">
+                            {otherContractors.map((c: any) => <option key={c.id} value={c.id}>{c.name} — {c.specialty.join(", ")}</option>)}
+                          </optgroup>
+                        )}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-medium text-slate-400 uppercase mb-1 block">Due Date</label>
+                      <input type="date" value={task.dueDate || ""} onChange={(e) => handleUpdate(task.id, { dueDate: e.target.value })}
+                        className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-[10px] font-medium text-slate-400 uppercase mb-1 block">Category</label>
+                      <input type="text" value={task.category} onChange={(e) => handleUpdate(task.id, { category: e.target.value })}
+                        className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-medium text-slate-400 uppercase mb-1 block">Est. Cost</label>
+                      <input type="number" value={task.estimatedCost || ""} onChange={(e) => handleUpdate(task.id, { estimatedCost: Number(e.target.value) })}
+                        placeholder="$0" className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-medium text-slate-400 uppercase mb-1 block">Actual Cost</label>
+                      <input type="number" value={task.actualCost || ""} onChange={(e) => handleUpdate(task.id, { actualCost: Number(e.target.value) })}
+                        placeholder="$0" className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-medium text-slate-400 uppercase mb-1 block">Notes</label>
+                    <textarea value={task.notes || ""} onChange={(e) => handleUpdate(task.id, { notes: e.target.value })}
+                      placeholder="Paint colors, materials, specifications, room-by-room details..."
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm resize-none h-28" />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-[10px] font-medium text-slate-400 uppercase">Photos</label>
+                      <label className="flex items-center gap-1 px-2 py-1 bg-slate-100 rounded text-[10px] text-slate-600 cursor-pointer hover:bg-slate-200">
+                        <Camera size={10} /> Add Photos
+                        <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleTaskPhotoUpload(task.id, e)} />
+                      </label>
+                    </div>
+                    {(task.photos?.length || 0) > 0 && (
+                      <div className="flex gap-2 flex-wrap">
+                        {task.photos.map((p: any) => (
+                          <div key={p.id} className="relative w-20 h-20 rounded-lg overflow-hidden group">
+                            <img src={p.url} alt={p.caption} className="w-full h-full object-cover" />
+                            <button onClick={() => removeTaskPhoto(task.id, p.id)}
+                              className="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                              <X size={10} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {projectTasks.length > 0 && (
+        <button onClick={handleAddSingle} className="w-full py-2 border-2 border-dashed border-slate-200 rounded-lg text-sm text-slate-400 hover:border-blue-300 hover:text-blue-500 transition flex items-center justify-center gap-2">
+          <Plus size={14} /> Add Another Task
+        </button>
+      )}
     </div>
   );
 }
@@ -669,6 +945,15 @@ function InvoicesTab({ invoices, store, projectId }: { invoices: any[]; store: a
 function ThisWeekSection({ projectId }: { projectId: string }) {
   const store = useStore();
   const todos = store.getProjectWeeklyTodos(projectId);
+
+  const tasksDueThisWeek = store.getProjectTasks(projectId).filter((t: any) => {
+    if (t.status === "completed") return false;
+    if (!t.dueDate) return false;
+    const now = new Date();
+    const due = new Date(t.dueDate);
+    const diff = (due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    return diff <= 7 && diff >= -3;
+  }).sort((a: any, b: any) => (a.dueDate || "").localeCompare(b.dueDate || ""));
   const [newText, setNewText] = useState("");
   const [adding, setAdding] = useState(false);
 
@@ -715,7 +1000,26 @@ function ThisWeekSection({ projectId }: { projectId: string }) {
         </div>
       )}
 
-      {todos.length === 0 && !adding && (
+      {tasksDueThisWeek.length > 0 && (
+        <div className="space-y-1.5 mb-3">
+          {tasksDueThisWeek.map((task: any) => {
+            const overdue = new Date(task.dueDate) < new Date();
+            return (
+              <div key={task.id} className={cn("flex items-center gap-2 px-3 py-2 rounded-lg text-sm",
+                overdue ? "bg-red-50 border border-red-200" : "bg-amber-50 border border-amber-200"
+              )}>
+                <AlertTriangle size={13} className={overdue ? "text-red-500" : "text-amber-500"} />
+                <span className="font-medium text-slate-800 flex-1">{task.title}</span>
+                <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded",
+                  overdue ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
+                )}>{overdue ? "OVERDUE" : "Due"} {formatDate(task.dueDate)}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {todos.length === 0 && tasksDueThisWeek.length === 0 && !adding && (
         <p className="text-sm text-slate-400 py-3">No items yet. Click &quot;Add Item&quot; to create one.</p>
       )}
 
