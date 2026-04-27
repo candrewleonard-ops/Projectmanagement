@@ -9,7 +9,7 @@ import {
 import { useStore } from "@/lib/store";
 import { formatCurrency, cn } from "@/lib/utils";
 import { BudgetChart } from "@/components/BudgetChart";
-import { WeeklyTodo } from "@/lib/types";
+import { TaskItem } from "@/lib/types";
 
 export default function Dashboard() {
   const store = useStore();
@@ -137,24 +137,29 @@ function StatCard({ icon, label, value, sub, color, pulse }: {
 function ThisWeekDashboard() {
   const store = useStore();
   const activeProjects = store.getActiveProjects();
-  const visibleTodos = store.getVisibleWeeklyTodos();
-  const [confirming, setConfirming] = useState<WeeklyTodo | null>(null);
 
-  // Group todos by project (only active projects)
+  const now = new Date();
+  const sevenDaysOut = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  const dueThisWeek = useMemo(() => {
+    return store.tasks.filter((t) => {
+      if (t.status === "completed") return false;
+      if (!t.dueDate) return false;
+      const due = new Date(t.dueDate);
+      return due <= sevenDaysOut;
+    });
+  }, [store.tasks]);
+
   const activeProjectIds = new Set(activeProjects.map((p) => p.id));
-  const grouped = new Map<string, WeeklyTodo[]>();
-  for (const todo of visibleTodos) {
-    if (!activeProjectIds.has(todo.projectId)) continue;
-    const existing = grouped.get(todo.projectId) || [];
-    existing.push(todo);
-    grouped.set(todo.projectId, existing);
+  const grouped = new Map<string, TaskItem[]>();
+  for (const task of dueThisWeek) {
+    if (!activeProjectIds.has(task.projectId)) continue;
+    const existing = grouped.get(task.projectId) || [];
+    existing.push(task);
+    grouped.set(task.projectId, existing);
   }
 
-  const handleCheck = () => {
-    if (!confirming) return;
-    store.updateWeeklyTodo(confirming.id, { hiddenFromDashboard: true });
-    setConfirming(null);
-  };
+  const totalItems = dueThisWeek.filter((t) => activeProjectIds.has(t.projectId)).length;
 
   return (
     <div className="stat-card">
@@ -162,54 +167,47 @@ function ThisWeekDashboard() {
         <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
           <ListChecks size={16} className="text-blue-600" /> This Week
         </h3>
-        <span className="text-xs text-slate-400">{visibleTodos.length} item{visibleTodos.length === 1 ? "" : "s"}</span>
+        <span className="text-xs text-slate-400">{totalItems} item{totalItems === 1 ? "" : "s"}</span>
       </div>
 
       {grouped.size === 0 ? (
         <div className="py-6 text-center">
-          <p className="text-sm text-slate-400">No items for this week.</p>
-          <p className="text-xs text-slate-400 mt-1">Add items from each project&apos;s page.</p>
+          <p className="text-sm text-slate-400">No tasks due this week.</p>
+          <p className="text-xs text-slate-400 mt-1">Tasks with due dates within 7 days appear here automatically.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {activeProjects.map((project) => {
-            const todos = grouped.get(project.id);
-            if (!todos || todos.length === 0) return null;
+            const tasks = grouped.get(project.id);
+            if (!tasks || tasks.length === 0) return null;
             return (
               <div key={project.id}>
-                <Link href={`/projects/${project.id}`} className="flex items-center gap-2 mb-2 group">
-                  <MapPin size={12} className="text-slate-400" />
-                  <span className="text-xs font-semibold text-slate-600 group-hover:text-blue-600 transition">{project.name}</span>
-                  <span className="text-xs text-slate-400">&middot; {project.address.city}, {project.address.state}</span>
+                <Link href={`/projects/${project.id}`} className="block mb-2 group">
+                  <span className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition">{project.name}</span>
+                  <span className="text-xs text-slate-400 ml-2">{project.address.city}, {project.address.state}</span>
                 </Link>
                 <div className="space-y-1.5">
-                  {todos.map((todo) => (
-                    <label key={todo.id} className="flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-50 transition cursor-pointer">
-                      <input type="checkbox" checked={false}
-                        onChange={() => setConfirming(todo)}
-                        className="mt-0.5 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                      <span className="text-sm text-slate-700 flex-1">{todo.text}</span>
-                    </label>
-                  ))}
+                  {tasks.map((task) => {
+                    const due = new Date(task.dueDate!);
+                    const overdue = due < now;
+                    return (
+                      <div key={task.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 transition">
+                        <div className={cn("w-2 h-2 rounded-full flex-shrink-0",
+                          overdue ? "bg-red-500" : "bg-amber-400"
+                        )} />
+                        <span className="text-sm text-slate-700 flex-1">{task.title}</span>
+                        <span className={cn("text-[10px] font-medium",
+                          overdue ? "text-red-500" : "text-amber-500"
+                        )}>
+                          {overdue ? "Overdue" : due.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
           })}
-        </div>
-      )}
-
-      {confirming && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setConfirming(null)}>
-          <div className="bg-white rounded-2xl p-6 shadow-2xl max-w-md" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Are you sure?</h3>
-            <p className="text-sm text-slate-600 mb-1">Mark this as done and remove from the dashboard?</p>
-            <p className="text-sm text-slate-800 font-medium mb-4 p-3 bg-slate-50 rounded-lg">&ldquo;{confirming.text}&rdquo;</p>
-            <p className="text-xs text-slate-500 mb-4">It will remain visible on the project&apos;s page.</p>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setConfirming(null)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg font-medium">No, keep it</button>
-              <button onClick={handleCheck} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">Yes, mark done</button>
-            </div>
-          </div>
         </div>
       )}
     </div>
