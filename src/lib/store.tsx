@@ -113,7 +113,7 @@ interface StoreActions {
 
 type Store = StoreState & StoreActions;
 
-const STORAGE_KEY = "flipcrm_data";
+const STORAGE_KEY = "flipcrm_data_v2";
 
 function loadState(): StoreState {
   if (typeof window === "undefined") return getDefaultState();
