@@ -2,12 +2,11 @@
 
 import React, { Suspense, useState, useMemo } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation"; // needed by Suspense boundary
 import {
-  Phone, MessageSquare, Mail, StickyNote, Send, PhoneCall,
-  PhoneMissed, Calendar, Clock, Search, X, ChevronRight,
-  Plus, AlertTriangle, Ban, CheckSquare, Square, Users,
-  Filter, UserPlus, FolderKanban,
+  MessageSquare, Search, X, ChevronRight,
+  Plus, AlertTriangle, Ban, Users,
+  UserPlus, FolderKanban,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { formatRelativeTime, formatDate, cn } from "@/lib/utils";
@@ -24,18 +23,11 @@ export default function CommunicationsPage() {
 }
 
 function HotTasksCommsContent() {
-  const searchParams = useSearchParams();
+  useSearchParams();
   const store = useStore();
 
   const [contactSearch, setContactSearch] = useState("");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
-  const [selectedContractors, setSelectedContractors] = useState<string[]>([]);
-  const [showAddToProject, setShowAddToProject] = useState(false);
-  const [openContactId, setOpenContactId] = useState<string | null>(null);
-  const [messageText, setMessageText] = useState("");
-  const [scheduleDate, setScheduleDate] = useState("");
-  const [scheduleTime, setScheduleTime] = useState("");
-  const [showSchedule, setShowSchedule] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
 
@@ -87,57 +79,8 @@ function HotTasksCommsContent() {
       .filter((p) => p.recentContacts.length > 0);
   }, [store]);
 
-  const openContact = store.getContractor(openContactId || "");
-  const openContactComms = openContactId
-    ? store.getContractorComms(openContactId).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-    : [];
-
   const toggleFilter = (f: string) => {
     setActiveFilters((prev) => prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]);
-  };
-
-  const toggleSelect = (id: string) => {
-    setSelectedContractors((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
-  };
-
-  const handleAddToProject = (projectId: string) => {
-    const project = store.getProject(projectId);
-    if (!project) return;
-    const newContractorIds = [...new Set([...project.contractorIds, ...selectedContractors])];
-    store.updateProject(projectId, { contractorIds: newContractorIds });
-    selectedContractors.forEach((cid) => {
-      const contractor = store.getContractor(cid);
-      if (contractor) {
-        const newProjectIds = [...new Set([...contractor.projectIds, projectId])];
-        store.updateContractor(cid, { projectIds: newProjectIds });
-      }
-    });
-    setSelectedContractors([]);
-    setShowAddToProject(false);
-  };
-
-  const handleSend = () => {
-    if (!messageText.trim() || !openContactId) return;
-    store.addCommunication({
-      id: `comm-${Date.now()}`, contractorId: openContactId,
-      type: "sms", direction: "outbound", content: messageText,
-      timestamp: new Date().toISOString(), read: true,
-    });
-    setMessageText("");
-  };
-
-  const handleScheduleMsg = () => {
-    if (!messageText.trim() || !openContactId || !scheduleDate || !scheduleTime) return;
-    store.addCommunication({
-      id: `comm-${Date.now()}`, contractorId: openContactId,
-      type: "sms", direction: "outbound", content: messageText,
-      timestamp: new Date().toISOString(), read: true,
-      scheduledFor: `${scheduleDate}T${scheduleTime}:00`,
-    });
-    setMessageText("");
-    setScheduleDate("");
-    setScheduleTime("");
-    setShowSchedule(false);
   };
 
   const formatCommPreview = (comm: Communication) => {
@@ -244,8 +187,7 @@ function HotTasksCommsContent() {
           </div>
           <div className="max-h-64 overflow-auto divide-y divide-slate-100">
             {filteredContractors.map((c) => (
-              <div key={c.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition cursor-pointer"
-                onClick={() => setOpenContactId(c.id)}>
+              <div key={c.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
                   {c.name.split(" ").map((n) => n[0]).join("")}
                 </div>
@@ -289,8 +231,7 @@ function HotTasksCommsContent() {
                     if (!contractor) return null;
                     return (
                       <div key={contractorId}
-                        onClick={() => setOpenContactId(contractorId)}
-                        className="flex items-center gap-2 px-4 py-2 hover:bg-blue-50/40 transition cursor-pointer">
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-blue-50/40 transition">
                         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0">
                           {contractor.name.split(" ").map((n) => n[0]).join("")}
                         </div>
@@ -334,8 +275,7 @@ function HotTasksCommsContent() {
               <div className="text-center py-10 text-slate-400 text-xs">No contractors assigned yet</div>
             )}
             {projectContractors.map((c) => (
-              <div key={c.id} className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition cursor-pointer"
-                onClick={() => setOpenContactId(c.id)}>
+              <div key={c.id} className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
                   {c.name.split(" ").map((n) => n[0]).join("")}
                 </div>
@@ -397,30 +337,6 @@ function HotTasksCommsContent() {
         </div>
       )}
 
-      {/* Add to Project Modal */}
-      {showAddToProject && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowAddToProject(false)}>
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-slate-900 mb-1">Add to Project</h3>
-            <p className="text-sm text-slate-500 mb-4">Select which project to add {selectedContractors.length} contractor{selectedContractors.length > 1 ? "s" : ""} to:</p>
-            <div className="space-y-2 max-h-64 overflow-auto">
-              {store.getActiveProjects().map((project) => (
-                <button key={project.id} onClick={() => handleAddToProject(project.id)}
-                  className="w-full text-left px-4 py-3 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition flex items-center justify-between group">
-                  <div>
-                    <p className="text-sm font-medium text-slate-800 group-hover:text-blue-700">{project.name}</p>
-                    <p className="text-xs text-slate-400">{project.address.city}, {project.address.state}</p>
-                  </div>
-                  <Plus size={14} className="text-slate-300 group-hover:text-blue-500" />
-                </button>
-              ))}
-            </div>
-            <div className="flex justify-end mt-4">
-              <button onClick={() => setShowAddToProject(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
