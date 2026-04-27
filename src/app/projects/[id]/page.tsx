@@ -371,7 +371,7 @@ function addDays(dateStr: string, days: number): string {
 }
 
 function TasksTab({ tasks: projectTasks, projectId, store }: { tasks: any[]; projectId: string; store: any }) {
-  const [expandedTask, setExpandedTask] = useState<string | null>(null);
+  const [taskSubTab, setTaskSubTab] = useState<"active" | "completed">("active");
   const [photoUploading, setPhotoUploading] = useState<string | null>(null);
 
   const projectContractors = store.contractors.filter((c: any) =>
@@ -380,6 +380,10 @@ function TasksTab({ tasks: projectTasks, projectId, store }: { tasks: any[]; pro
   const otherContractors = store.contractors.filter((c: any) =>
     !store.getProject(projectId)?.contractorIds?.includes(c.id)
   );
+
+  const activeTasks = projectTasks.filter((t: any) => t.status !== "completed");
+  const completedTasks = projectTasks.filter((t: any) => t.status === "completed");
+  const displayTasks = taskSubTab === "active" ? activeTasks : completedTasks;
 
   const handleAddDefaults = () => {
     const today = new Date().toISOString().split("T")[0];
@@ -483,7 +487,20 @@ function TasksTab({ tasks: projectTasks, projectId, store }: { tasks: any[]; pro
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-700">Tasks & Work Orders ({projectTasks.length})</h3>
+        <div className="flex items-center gap-1">
+          <button onClick={() => setTaskSubTab("active")}
+            className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition",
+              taskSubTab === "active" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            )}>
+            Active ({activeTasks.length})
+          </button>
+          <button onClick={() => setTaskSubTab("completed")}
+            className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition",
+              taskSubTab === "completed" ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            )}>
+            Completed ({completedTasks.length})
+          </button>
+        </div>
         <div className="flex gap-2">
           <button onClick={handleAddSingle} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 transition">
             <Plus size={12} /> Add Task
@@ -494,7 +511,7 @@ function TasksTab({ tasks: projectTasks, projectId, store }: { tasks: any[]; pro
         </div>
       </div>
 
-      {sorted.length === 0 && (
+      {projectTasks.length === 0 && (
         <div className="stat-card flex flex-col items-center py-16">
           <ListChecks size={56} className="text-blue-200 mb-4" />
           <p className="text-lg font-semibold text-slate-700 mb-1">No Scope of Work Yet</p>
@@ -505,54 +522,39 @@ function TasksTab({ tasks: projectTasks, projectId, store }: { tasks: any[]; pro
         </div>
       )}
 
-      <div className="space-y-2">
-        {sorted.map((task: any, idx: number) => {
-          const isExpanded = expandedTask === task.id;
+      {displayTasks.length === 0 && projectTasks.length > 0 && (
+        <div className="stat-card py-10 text-center">
+          <p className="text-sm text-slate-400">{taskSubTab === "active" ? "All tasks completed!" : "No completed tasks yet."}</p>
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {sorted.filter((t: any) => taskSubTab === "active" ? t.status !== "completed" : t.status === "completed").map((task: any, idx: number) => {
           const overdue = isOverdue(task.dueDate) && task.status !== "completed";
           const dueSoon = isDueSoon(task.dueDate) && task.status !== "completed";
-          const contractor = task.assignedContractorId ? store.getContractor(task.assignedContractorId) : null;
 
           return (
-            <div key={task.id} className={cn("stat-card border-l-4 transition",
-              task.status === "completed" ? "border-l-emerald-500 opacity-70" :
+            <div key={task.id} className={cn("stat-card border-l-4 transition p-4",
+              task.status === "completed" ? "border-l-emerald-500 bg-emerald-50/30" :
               overdue ? "border-l-red-500 ring-1 ring-red-200" :
               dueSoon ? "border-l-amber-500" :
               task.status === "blocked" ? "border-l-red-500" :
               task.status === "in_progress" ? "border-l-sky-500" :
               "border-l-slate-300"
             )}>
-              <div className="flex items-center gap-3 cursor-pointer" onClick={() => setExpandedTask(isExpanded ? null : task.id)}>
+              {/* Row 1: Number, Title, Status, Delete */}
+              <div className="flex items-center gap-3">
                 <span className="text-xs font-bold text-slate-300 w-5 text-center">{idx + 1}</span>
-                <div className="flex-1 min-w-0">
-                  {isExpanded ? (
-                    <input
-                      type="text"
-                      value={task.title}
-                      onChange={(e) => handleUpdate(task.id, { title: e.target.value })}
-                      onClick={(e) => e.stopPropagation()}
-                      placeholder="Task name..."
-                      className="w-full font-medium text-slate-900 border-b border-slate-200 pb-1 focus:outline-none focus:border-blue-400 text-sm bg-transparent"
-                    />
-                  ) : (
-                    <h4 className="font-medium text-slate-900 text-sm truncate">{task.title || "Untitled task"}</h4>
-                  )}
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    {task.dueDate && (
-                      <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded",
-                        overdue ? "bg-red-100 text-red-700" : dueSoon ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"
-                      )}>
-                        {overdue ? "OVERDUE" : dueSoon ? "DUE SOON" : ""} {formatDate(task.dueDate)}
-                      </span>
-                    )}
-                    <span className="text-[10px] text-slate-400">{task.category}</span>
-                    {contractor && <span className="text-[10px] text-blue-500">{contractor.name}</span>}
-                    {(task.photos?.length || 0) > 0 && <span className="text-[10px] text-slate-400"><Camera size={10} className="inline" /> {task.photos.length}</span>}
-                  </div>
-                </div>
+                <input
+                  type="text"
+                  value={task.title}
+                  onChange={(e) => handleUpdate(task.id, { title: e.target.value })}
+                  placeholder="Task name..."
+                  className="flex-1 font-medium text-slate-900 text-sm bg-transparent border-b border-transparent hover:border-slate-200 focus:border-blue-400 focus:outline-none pb-0.5"
+                />
                 <select
                   value={task.status}
-                  onChange={(e) => { e.stopPropagation(); handleUpdate(task.id, { status: e.target.value, ...(e.target.value === "completed" ? { completedDate: new Date().toISOString().split("T")[0] } : {}) }); }}
-                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => handleUpdate(task.id, { status: e.target.value, ...(e.target.value === "completed" ? { completedDate: new Date().toISOString().split("T")[0] } : {}) })}
                   className={cn("text-[10px] font-medium rounded-full px-2 py-1 border-0 cursor-pointer",
                     task.status === "completed" ? "bg-emerald-100 text-emerald-700" :
                     task.status === "blocked" ? "bg-red-100 text-red-700" :
@@ -565,89 +567,81 @@ function TasksTab({ tasks: projectTasks, projectId, store }: { tasks: any[]; pro
                   <option value="blocked">Blocked</option>
                   <option value="completed">Completed</option>
                 </select>
-                <button onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
+                <button onClick={() => handleDeleteTask(task.id)}
                   className="p-1.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition"><Trash2 size={14} /></button>
               </div>
 
-              {isExpanded && (
-                <div className="mt-3 pt-3 border-t border-slate-100 space-y-3" onClick={(e) => e.stopPropagation()}>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[10px] font-medium text-slate-400 uppercase mb-1 block">Assigned Contractor</label>
-                      <select value={task.assignedContractorId || ""} onChange={(e) => handleUpdate(task.id, { assignedContractorId: e.target.value || undefined })}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm">
-                        <option value="">Unassigned</option>
-                        {projectContractors.length > 0 && (
-                          <optgroup label="Project Contractors">
-                            {projectContractors.map((c: any) => <option key={c.id} value={c.id}>{c.name} — {c.specialty.join(", ")}</option>)}
-                          </optgroup>
-                        )}
-                        {otherContractors.length > 0 && (
-                          <optgroup label="Other Contractors">
-                            {otherContractors.map((c: any) => <option key={c.id} value={c.id}>{c.name} — {c.specialty.join(", ")}</option>)}
-                          </optgroup>
-                        )}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-medium text-slate-400 uppercase mb-1 block">Due Date</label>
-                      <input type="date" value={task.dueDate || ""} onChange={(e) => handleUpdate(task.id, { dueDate: e.target.value })}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="text-[10px] font-medium text-slate-400 uppercase mb-1 block">Category</label>
-                      <input type="text" value={task.category} onChange={(e) => handleUpdate(task.id, { category: e.target.value })}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm" />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-medium text-slate-400 uppercase mb-1 block">Est. Cost</label>
-                      <input type="number" value={task.estimatedCost || ""} onChange={(e) => handleUpdate(task.id, { estimatedCost: Number(e.target.value) })}
-                        placeholder="$0" className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm" />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-medium text-slate-400 uppercase mb-1 block">Actual Cost</label>
-                      <input type="number" value={task.actualCost || ""} onChange={(e) => handleUpdate(task.id, { actualCost: Number(e.target.value) })}
-                        placeholder="$0" className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-medium text-slate-400 uppercase mb-1 block">Notes</label>
-                    <textarea value={task.notes || ""} onChange={(e) => handleUpdate(task.id, { notes: e.target.value })}
-                      placeholder="Paint colors, materials, specifications, room-by-room details..."
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm resize-none h-28" />
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-[10px] font-medium text-slate-400 uppercase">Photos</label>
-                      <label className="flex items-center gap-1 px-2 py-1 bg-slate-100 rounded text-[10px] text-slate-600 cursor-pointer hover:bg-slate-200">
-                        <Camera size={10} /> Add Photos
-                        <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleTaskPhotoUpload(task.id, e)} />
-                      </label>
-                    </div>
-                    {(task.photos?.length || 0) > 0 && (
-                      <div className="flex gap-2 flex-wrap">
-                        {task.photos.map((p: any) => (
-                          <div key={p.id} className="relative w-20 h-20 rounded-lg overflow-hidden group">
-                            <img src={p.url} alt={p.caption} className="w-full h-full object-cover" />
-                            <button onClick={() => removeTaskPhoto(task.id, p.id)}
-                              className="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                              <X size={10} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
+              {/* Row 2: Inline fields */}
+              <div className="grid grid-cols-4 gap-2 mt-3">
+                <div>
+                  <label className="text-[10px] font-medium text-slate-400 uppercase mb-0.5 block">Contractor</label>
+                  <select value={task.assignedContractorId || ""} onChange={(e) => handleUpdate(task.id, { assignedContractorId: e.target.value || undefined })}
+                    className="w-full border border-slate-200 rounded px-2 py-1 text-xs">
+                    <option value="">Unassigned</option>
+                    {projectContractors.length > 0 && (
+                      <optgroup label="Project">
+                        {projectContractors.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </optgroup>
                     )}
-                  </div>
+                    {otherContractors.length > 0 && (
+                      <optgroup label="Other">
+                        {otherContractors.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </optgroup>
+                    )}
+                  </select>
                 </div>
-              )}
+                <div>
+                  <label className="text-[10px] font-medium text-slate-400 uppercase mb-0.5 block">Due Date</label>
+                  <input type="date" value={task.dueDate || ""} onChange={(e) => handleUpdate(task.id, { dueDate: e.target.value })}
+                    className={cn("w-full border rounded px-2 py-1 text-xs",
+                      overdue ? "border-red-300 bg-red-50" : dueSoon ? "border-amber-300 bg-amber-50" : "border-slate-200"
+                    )} />
+                </div>
+                <div>
+                  <label className="text-[10px] font-medium text-slate-400 uppercase mb-0.5 block">Est. Cost</label>
+                  <input type="number" value={task.estimatedCost || ""} onChange={(e) => handleUpdate(task.id, { estimatedCost: Number(e.target.value) })}
+                    placeholder="$0" className="w-full border border-slate-200 rounded px-2 py-1 text-xs" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-medium text-slate-400 uppercase mb-0.5 block">Actual Cost</label>
+                  <input type="number" value={task.actualCost || ""} onChange={(e) => handleUpdate(task.id, { actualCost: Number(e.target.value) })}
+                    placeholder="$0" className="w-full border border-slate-200 rounded px-2 py-1 text-xs" />
+                </div>
+              </div>
+
+              {/* Row 3: Notes */}
+              <div className="mt-2">
+                <textarea value={task.notes || ""} onChange={(e) => handleUpdate(task.id, { notes: e.target.value })}
+                  placeholder="Notes — paint colors, materials, specs, room-by-room details..."
+                  className="w-full border border-slate-200 rounded px-3 py-2 text-xs resize-none h-16 focus:outline-none focus:ring-1 focus:ring-blue-400" />
+              </div>
+
+              {/* Row 4: Photos inline */}
+              <div className="mt-2 flex items-start gap-3">
+                <label className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700 font-medium cursor-pointer hover:bg-blue-100 transition flex-shrink-0">
+                  <Camera size={14} /> Add Photos
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleTaskPhotoUpload(task.id, e)} />
+                </label>
+                {(task.photos?.length || 0) > 0 && (
+                  <div className="flex gap-2 flex-wrap flex-1">
+                    {task.photos.map((p: any) => (
+                      <div key={p.id} className="relative w-16 h-16 rounded-lg overflow-hidden group flex-shrink-0">
+                        <img src={p.url} alt={p.caption} className="w-full h-full object-cover" />
+                        <button onClick={() => removeTaskPhoto(task.id, p.id)}
+                          className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-[8px]">
+                          <X size={8} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}
       </div>
 
-      {projectTasks.length > 0 && (
+      {taskSubTab === "active" && projectTasks.length > 0 && (
         <button onClick={handleAddSingle} className="w-full py-2 border-2 border-dashed border-slate-200 rounded-lg text-sm text-slate-400 hover:border-blue-300 hover:text-blue-500 transition flex items-center justify-center gap-2">
           <Plus size={14} /> Add Another Task
         </button>

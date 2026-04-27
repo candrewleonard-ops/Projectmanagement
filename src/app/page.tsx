@@ -138,10 +138,9 @@ function ThisWeekDashboard() {
   const store = useStore();
   const activeProjects = store.getActiveProjects();
 
-  const now = new Date();
-  const sevenDaysOut = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-
   const dueThisWeek = useMemo(() => {
+    const now = new Date();
+    const sevenDaysOut = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     return store.tasks.filter((t) => {
       if (t.status === "completed") return false;
       if (!t.dueDate) return false;
@@ -160,6 +159,10 @@ function ThisWeekDashboard() {
   }
 
   const totalItems = dueThisWeek.filter((t) => activeProjectIds.has(t.projectId)).length;
+
+  const handleComplete = (taskId: string) => {
+    store.updateTask(taskId, { status: "completed", completedDate: new Date().toISOString() });
+  };
 
   return (
     <div className="stat-card">
@@ -188,13 +191,13 @@ function ThisWeekDashboard() {
                 </Link>
                 <div className="space-y-1.5">
                   {tasks.map((task) => {
+                    const now = new Date();
                     const due = new Date(task.dueDate!);
                     const overdue = due < now;
                     return (
                       <div key={task.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 transition">
-                        <div className={cn("w-2 h-2 rounded-full flex-shrink-0",
-                          overdue ? "bg-red-500" : "bg-amber-400"
-                        )} />
+                        <button onClick={() => handleComplete(task.id)}
+                          className="w-4 h-4 rounded border border-slate-300 hover:border-blue-500 hover:bg-blue-50 flex-shrink-0 transition" />
                         <span className="text-sm text-slate-700 flex-1">{task.title}</span>
                         <span className={cn("text-[10px] font-medium",
                           overdue ? "text-red-500" : "text-amber-500"
