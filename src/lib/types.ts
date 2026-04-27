@@ -96,10 +96,13 @@ export interface TaskItem {
   assignedContractorId?: string;
   scheduledDate?: string;
   completedDate?: string;
+  dueDate?: string;
   orderConfirmed: boolean;
   estimatedCost: number;
   actualCost: number;
-  category: string; // e.g. "HVAC", "Plumbing", "Electrical"
+  category: string;
+  notes?: string;
+  photos?: ProjectPhoto[];
 }
 
 // ---- Contractors ----
