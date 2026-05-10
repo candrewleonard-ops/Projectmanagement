@@ -7,12 +7,17 @@ import {
   ArrowRight, MapPin, ListChecks,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 import { formatCurrency, cn } from "@/lib/utils";
 import { BudgetChart } from "@/components/BudgetChart";
 import { TaskItem } from "@/lib/types";
 
 export default function Dashboard() {
   const store = useStore();
+  const { user } = useAuth();
+  const firstName = (user?.name || "Chris").split(" ")[0];
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const activeProjects = store.getActiveProjects();
   const topExpenses = useMemo(() => {
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
@@ -32,8 +37,8 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Project Manager</h1>
-        <p className="text-sm text-slate-500 mt-1">Welcome back, Chris. You have {hotTasks.length} critical items and {unreadComms} unread messages.</p>
+        <h1 className="text-2xl font-bold text-slate-900">{greeting}, {firstName}</h1>
+        <p className="text-sm text-slate-500 mt-1">You have {hotTasks.length} critical item{hotTasks.length === 1 ? "" : "s"} and {unreadComms} unread message{unreadComms === 1 ? "" : "s"}.</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

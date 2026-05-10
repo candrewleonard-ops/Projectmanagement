@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, FolderKanban, HardHat, FileText,
-  MessageSquare, Settings, Phone, UserPlus, Landmark, AlertTriangle,
+  Settings, Phone, UserPlus, Landmark, AlertTriangle, LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
 
 const nav = [
   { href: "/", label: "Project Manager", icon: LayoutDashboard },
@@ -21,8 +22,14 @@ const nav = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, signOut } = useAuth();
 
   if (pathname === "/signup" || pathname === "/login") return null;
+
+  const displayName = user?.name || "Chris Leonard";
+  const initials = user?.avatarInitials || "CL";
+  const subtitle = user ? user.email : "Admin";
 
   return (
     <aside className="fixed inset-y-0 left-0 w-64 bg-gradient-to-b from-slate-900 to-slate-950 text-slate-200 flex flex-col z-30">
@@ -59,14 +66,21 @@ export function Sidebar() {
       </nav>
 
       <div className="p-4 border-t border-slate-700/30">
-        <Link href="/signup" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 text-sm mb-3 transition-all duration-200">
-          <UserPlus size={16} /> Sign Up / Log In
-        </Link>
+        {user ? (
+          <button onClick={() => { signOut(); router.push("/signup"); }}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 text-sm mb-3 transition-all duration-200">
+            <LogOut size={16} /> Sign Out
+          </button>
+        ) : (
+          <Link href="/signup" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 text-sm mb-3 transition-all duration-200">
+            <UserPlus size={16} /> Sign Up / Log In
+          </Link>
+        )}
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold shadow-lg shadow-blue-500/20">CL</div>
-          <div>
-            <p className="text-xs font-medium text-white">Chris Leonard</p>
-            <p className="text-[10px] text-slate-500">Admin</p>
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold shadow-lg shadow-blue-500/20">{initials}</div>
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-white truncate">{displayName}</p>
+            <p className="text-[10px] text-slate-500 truncate">{subtitle}</p>
           </div>
         </div>
       </div>

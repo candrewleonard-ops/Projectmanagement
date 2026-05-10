@@ -1,36 +1,68 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Building2, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Building2, Mail, Lock, User, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { useToast } from "@/components/Toast";
 
 export default function SignUpPage() {
-  const [mode, setMode] = useState<"signup" | "login">("signup");
+  const [mode, setMode] = useState<"signup" | "login">("login");
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [submitting, setSubmitting] = useState(false);
   const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
+  const { user, signIn, hydrated } = useAuth();
+  const toast = useToast();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (hydrated && user) router.replace("/");
+  }, [user, hydrated, router]);
+
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!form.email.trim() || !form.password.trim()) {
+      toast.error("Email and password are required");
+      return;
+    }
+    if (mode === "signup" && !form.name.trim()) {
+      toast.error("Please enter your name");
+      return;
+    }
+    setSubmitting(true);
+    setTimeout(() => {
+      signIn(form.email, mode === "signup" ? form.name : undefined);
+      toast.success(mode === "signup" ? "Welcome to FlipCRM!" : "Welcome back!");
+      router.push("/");
+    }, 350);
+  };
+
+  const handleGoogle = () => {
+    signIn("demo@flipcrm.io", "Chris Leonard");
+    toast.success("Signed in with Google");
+    router.push("/");
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 -m-6 -ml-64">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-blue-50 to-violet-50 -m-6 -ml-64">
       <div className="w-full max-w-md p-8">
-        {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center mx-auto mb-3">
-            <Building2 size={28} className="text-white" />
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-500/30">
+            <Building2 size={30} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">FlipCRM</h1>
-          <p className="text-sm text-slate-500">by Reinnovation Homes</p>
+          <h1 className="text-3xl font-bold text-slate-900">FlipCRM</h1>
+          <p className="text-sm text-slate-500 mt-1">by Reinnovation Homes</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6">
-          {/* Tabs */}
+        <div className="bg-white rounded-2xl shadow-2xl shadow-slate-200/50 border border-slate-200 p-6">
           <div className="flex mb-6 bg-slate-100 rounded-lg p-1">
             <button onClick={() => setMode("signup")} className={`flex-1 py-2 text-sm font-medium rounded-md transition ${mode === "signup" ? "bg-white shadow text-slate-900" : "text-slate-500"}`}>Sign Up</button>
             <button onClick={() => setMode("login")} className={`flex-1 py-2 text-sm font-medium rounded-md transition ${mode === "login" ? "bg-white shadow text-slate-900" : "text-slate-500"}`}>Log In</button>
           </div>
 
-          {/* Google Auth */}
-          <button className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition mb-4">
+          <button onClick={handleGoogle} className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition mb-4">
             <svg width="18" height="18" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -45,33 +77,38 @@ export default function SignUpPage() {
             <div className="relative flex justify-center text-xs"><span className="bg-white px-3 text-slate-400">or continue with email</span></div>
           </div>
 
-          {/* Form */}
-          <div className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-3">
             {mode === "signup" && (
               <div className="relative">
                 <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input type="text" placeholder="Full Name" value={form.name} onChange={(e) => set("name", e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm" />
               </div>
             )}
             <div className="relative">
               <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input type="email" placeholder="Email Address" value={form.email} onChange={(e) => set("email", e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm" />
             </div>
             <div className="relative">
               <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input type={showPassword ? "text" : "password"} placeholder="Password" value={form.password} onChange={(e) => set("password", e.target.value)}
-                className="w-full pl-10 pr-10 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                className="w-full pl-10 pr-10 py-2.5 border border-slate-300 rounded-lg text-sm" />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-          </div>
 
-          <button className="w-full mt-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-            {mode === "signup" ? "Create Account" : "Log In"}
-          </button>
+            <button type="submit" disabled={submitting}
+              className="w-full mt-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md shadow-blue-500/20">
+              {submitting ? "Please wait..." : (
+                <>
+                  {mode === "signup" ? "Create Account" : "Log In"}
+                  <ArrowRight size={14} />
+                </>
+              )}
+            </button>
+          </form>
 
           {mode === "login" && (
             <p className="text-center text-xs text-blue-600 mt-3 cursor-pointer hover:text-blue-700">Forgot your password?</p>
