@@ -51,7 +51,7 @@ function ProjectsContent() {
           <h1 className="text-2xl font-bold text-slate-900">{activeFolder ? activeFolder.name : "All Projects"}</h1>
           <p className="text-sm text-slate-500 mt-1">{filtered.length} projects</p>
         </div>
-        <button onClick={() => setShowNewProject(true)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+        <button onClick={() => setShowNewProject(true)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition shadow-sm shadow-blue-200">
           <Plus size={16} /> New Project
         </button>
       </div>
@@ -81,7 +81,22 @@ function ProjectsContent() {
         </div>
       </div>
 
-      {viewMode === "grid" ? (
+      {filtered.length === 0 ? (
+        <div className="stat-card flex flex-col items-center py-16">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-100 to-violet-100 flex items-center justify-center mb-4">
+            <Plus size={28} className="text-blue-500" />
+          </div>
+          <p className="text-lg font-semibold text-slate-700 mb-1">{store.projects.length === 0 ? "No Projects Yet" : "No Projects Match"}</p>
+          <p className="text-sm text-slate-400 mb-5">
+            {store.projects.length === 0 ? "Get started by creating your first project" : "Try adjusting your filters"}
+          </p>
+          {store.projects.length === 0 && (
+            <button onClick={() => setShowNewProject(true)} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+              <Plus size={16} /> New Project
+            </button>
+          )}
+        </div>
+      ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((project) => {
             const pTasks = store.getProjectTasks(project.id);

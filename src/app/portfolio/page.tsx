@@ -54,24 +54,41 @@ export default function PortfolioPage() {
           <h1 className="text-2xl font-bold text-slate-900">Passive Income Portfolio</h1>
           <p className="text-sm text-slate-500 mt-1">{filtered.length} investments &middot; {totalRentals} rentals &middot; {totalNotes} notes</p>
         </div>
-        <button onClick={() => setShowNewInvestment(true)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+        <button onClick={() => setShowNewInvestment(true)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition shadow-sm shadow-blue-200">
           <Plus size={16} /> Create New Investment
         </button>
       </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="stat-card">
-          <p className="text-xs text-slate-400 mb-1">Total Properties</p>
-          <p className="text-2xl font-bold text-slate-900">{totalRentals}</p>
+        <div className="stat-card flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <Home size={20} className="text-white" />
+          </div>
+          <div>
+            <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Rentals</p>
+            <p className="text-xl font-bold text-slate-900">{totalRentals}</p>
+          </div>
         </div>
-        <div className="stat-card">
-          <p className="text-xs text-slate-400 mb-1">Total Notes</p>
-          <p className="text-2xl font-bold text-slate-900">{totalNotes}</p>
+        <div className="stat-card flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
+            <FileText size={20} className="text-white" />
+          </div>
+          <div>
+            <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Notes</p>
+            <p className="text-xl font-bold text-slate-900">{totalNotes}</p>
+          </div>
         </div>
-        <div className="stat-card">
-          <p className="text-xs text-slate-400 mb-1">Monthly Cash Flow</p>
-          <p className={cn("text-2xl font-bold", totalMonthlyCashflow >= 0 ? "text-emerald-700" : "text-red-700")}>{formatCurrency(totalMonthlyCashflow)}</p>
+        <div className="stat-card flex items-center gap-3">
+          <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shadow-lg",
+            totalMonthlyCashflow >= 0 ? "bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-emerald-500/20" : "bg-gradient-to-br from-red-500 to-red-600 shadow-red-500/20"
+          )}>
+            <DollarSign size={20} className="text-white" />
+          </div>
+          <div>
+            <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Monthly Cash Flow</p>
+            <p className={cn("text-xl font-bold", totalMonthlyCashflow >= 0 ? "text-emerald-700" : "text-red-700")}>{formatCurrency(totalMonthlyCashflow)}</p>
+          </div>
         </div>
       </div>
 

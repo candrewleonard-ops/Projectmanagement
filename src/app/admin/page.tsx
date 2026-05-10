@@ -32,7 +32,7 @@ export default function AdminPage() {
         </div>
         <button
           onClick={() => setShowAddUser(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition shadow-sm shadow-blue-200"
         >
           <UserPlus size={16} /> Add User
         </button>
