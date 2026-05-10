@@ -69,9 +69,9 @@ export default function ContractorsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Contractors</h1>
-          <p className="text-sm text-slate-500 mt-1">{filtered.length} contractors</p>
+          <p className="text-sm text-slate-500 mt-1">{filtered.length} contractor{filtered.length !== 1 ? "s" : ""} &middot; {states.length} state{states.length !== 1 ? "s" : ""}</p>
         </div>
-        <button onClick={() => setShowAddContractor(true)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+        <button onClick={() => setShowAddContractor(true)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition shadow-sm shadow-blue-200">
           <Plus size={16} /> Add Contractor
         </button>
       </div>
@@ -95,8 +95,26 @@ export default function ContractorsPage() {
         </select>
       </div>
 
+      {/* Empty State */}
+      {filtered.length === 0 && (
+        <div className="stat-card flex flex-col items-center py-16">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-100 to-violet-100 flex items-center justify-center mb-4">
+            <Plus size={28} className="text-blue-500" />
+          </div>
+          <p className="text-lg font-semibold text-slate-700 mb-1">{store.contractors.length === 0 ? "No Contractors Yet" : "No Matches"}</p>
+          <p className="text-sm text-slate-400 mb-5">
+            {store.contractors.length === 0 ? "Add your first contractor to start building your team" : "Try adjusting your search or filters"}
+          </p>
+          {store.contractors.length === 0 && (
+            <button onClick={() => setShowAddContractor(true)} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+              <Plus size={16} /> Add Contractor
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Close CRM-style Table */}
-      <div className="stat-card p-0 overflow-hidden">
+      {filtered.length > 0 && <div className="stat-card p-0 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
@@ -254,7 +272,7 @@ export default function ContractorsPage() {
             })}
           </tbody>
         </table>
-      </div>
+      </div>}
 
       {/* Add Contractor Modal */}
       {showAddContractor && <AddContractorModal store={store} onClose={() => setShowAddContractor(false)} />}

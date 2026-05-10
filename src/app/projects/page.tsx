@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Plus, MapPin, Search, Grid3X3, List, Trash2, Edit3 } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { useToast } from "@/components/Toast";
 import { formatCurrency, statusColor, progressPercent, cn } from "@/lib/utils";
 import { ProjectStatus } from "@/lib/types";
 
@@ -16,6 +17,7 @@ function ProjectsContent() {
   const searchParams = useSearchParams();
   const folderFilter = searchParams.get("folder");
   const store = useStore();
+  const toast = useToast();
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -36,8 +38,10 @@ function ProjectsContent() {
   const activeFolder = store.folders.find((f) => f.id === folderFilter);
 
   const handleDelete = (id: string) => {
+    const p = store.getProject(id);
     store.deleteProject(id);
     setDeleteConfirm(null);
+    toast.success(`Deleted ${p?.name || "project"}`);
   };
 
   return (
@@ -159,7 +163,7 @@ function ProjectsContent() {
         </div>
       )}
 
-      {showNewProject && <NewProjectModal store={store} onClose={() => setShowNewProject(false)} />}
+      {showNewProject && <NewProjectModal store={store} onClose={() => setShowNewProject(false)} onCreated={(name) => toast.success(`Created ${name}`)} />}
 
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setDeleteConfirm(null)}>
@@ -177,7 +181,7 @@ function ProjectsContent() {
   );
 }
 
-function NewProjectModal({ store, onClose }: { store: ReturnType<typeof useStore>; onClose: () => void }) {
+function NewProjectModal({ store, onClose, onCreated }: { store: ReturnType<typeof useStore>; onClose: () => void; onCreated?: (name: string) => void }) {
   const [form, setForm] = useState({
     name: "", street: "", city: "", state: "", zip: "",
     purchasePrice: "", estimatedARV: "", totalBudget: "",
@@ -202,6 +206,7 @@ function NewProjectModal({ store, onClose }: { store: ReturnType<typeof useStore
       scopeOfWork: form.scopeOfWork,
       createdAt: new Date().toISOString().slice(0, 10),
     });
+    onCreated?.(form.name);
     onClose();
   };
 
