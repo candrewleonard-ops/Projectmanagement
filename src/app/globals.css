@@ -82,3 +82,29 @@ input:focus, select:focus, textarea:focus {
   from { opacity: 0; transform: translateX(-12px); }
   to { opacity: 1; transform: translateX(0); }
 }
+
+.scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Better disabled state on buttons */
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Smooth all default transitions */
+button, a, input, select, textarea {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Selection */
+::selection {
+  background: rgba(37, 99, 235, 0.2);
+}

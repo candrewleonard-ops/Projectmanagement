@@ -9,6 +9,7 @@ import {
   UserPlus, FolderKanban,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { useToast } from "@/components/Toast";
 import { formatRelativeTime, formatDate, cn } from "@/lib/utils";
 import { Communication, Contractor } from "@/lib/types";
 
@@ -25,6 +26,7 @@ export default function CommunicationsPage() {
 function HotTasksCommsContent() {
   useSearchParams();
   const store = useStore();
+  const toast = useToast();
 
   const [contactSearch, setContactSearch] = useState("");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
@@ -377,6 +379,7 @@ function HotTasksCommsContent() {
                     store.updateProject(selectedProject.id, { contractorIds: newIds });
                     const cProjects = [...new Set([...c.projectIds, selectedProject.id])];
                     store.updateContractor(c.id, { projectIds: cProjects });
+                    toast.success(`Assigned ${c.name} to ${selectedProject.name}`);
                   }}
                     className="w-full text-left px-4 py-3 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition flex items-center justify-between group">
                     <div>
