@@ -7,17 +7,83 @@ import {
   Investment, RentalProperty, NoteInvestment, WorkOrder, WeeklyTodo,
 } from "./types";
 import {
-  projects as defaultProjects,
-  contractors as defaultContractors,
   tasks as defaultTasks,
   expenses as defaultExpenses,
   invoices as defaultInvoices,
   communications as defaultComms,
-  folders as defaultFolders,
   users as defaultUsers,
   organization as defaultOrg,
   currentUser,
 } from "./mock-data";
+import { createClient } from "./supabase/client";
+
+// New accounts start empty — projects/contractors load from Supabase per user.
+const defaultProjects: Project[] = [];
+const defaultContractors: Contractor[] = [];
+const defaultFolders: Folder[] = [
+  { id: "f1", name: "Active Flips", color: "#22c55e", projectIds: [] },
+  { id: "f2", name: "Under Evaluation", color: "#f59e0b", projectIds: [] },
+  { id: "f3", name: "Completed", color: "#6366f1", projectIds: [] },
+  { id: "f4", name: "On Hold", color: "#ef4444", projectIds: [] },
+];
+
+// Adapters: Supabase row -> existing client-side shape
+interface DbProject {
+  id: string; name: string; address_line1: string | null;
+  city: string | null; state: string | null; zip: string | null;
+  status: string; purchase_price: string | number | null;
+  rehab_budget: string | number | null; arv: string | number | null;
+  notes: string | null; created_at: string;
+}
+interface DbContractor {
+  id: string; name: string; trade: string | null;
+  phone: string | null; email: string | null;
+  rating: number | null; notes: string | null;
+}
+function dbToProject(p: DbProject, idx: number): Project {
+  return {
+    id: p.id,
+    name: p.name,
+    folderId: "f1",
+    status: "active",
+    address: {
+      street: p.address_line1 || "",
+      city: p.city || "",
+      state: p.state || "",
+      zip: p.zip || "",
+      lat: 33 + ((idx * 7) % 15),
+      lng: -120 + ((idx * 11) % 50),
+    },
+    purchasePrice: Number(p.purchase_price) || 0,
+    estimatedARV: Number(p.arv) || 0,
+    totalBudget: Number(p.rehab_budget) || 0,
+    totalSpent: 0,
+    startDate: "",
+    estimatedEndDate: "",
+    contractorIds: [],
+    photos: [],
+    renders: [],
+    scopeOfWork: p.notes || "",
+    createdAt: (p.created_at || "").slice(0, 10),
+  };
+}
+function dbToContractor(c: DbContractor): Contractor {
+  return {
+    id: c.id,
+    name: c.name,
+    company: c.name,
+    email: c.email || "",
+    phone: c.phone || "",
+    city: "",
+    state: "",
+    zip: "",
+    specialty: c.trade ? [c.trade] : [],
+    rating: c.rating || 4,
+    projectIds: [],
+    totalJobsCompleted: 0,
+    notes: c.notes || "",
+  };
+}
 
 interface VitalInfo {
   projectId: string;
@@ -113,15 +179,18 @@ interface StoreActions {
 
 type Store = StoreState & StoreActions;
 
-const STORAGE_KEY = "flipcrm_data_v2";
+const STORAGE_KEY_BASE = "flipcrm_data_v3";
 
-function loadState(): StoreState {
+function storageKeyFor(userId: string | null): string {
+  return userId ? `${STORAGE_KEY_BASE}_${userId}` : `${STORAGE_KEY_BASE}_anon`;
+}
+
+function loadState(userId: string | null): StoreState {
   if (typeof window === "undefined") return getDefaultState();
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKeyFor(userId));
     if (raw) {
       const parsed = JSON.parse(raw);
-      // Merge with defaults so newly-added fields (e.g. investments) are never undefined
       return { ...getDefaultState(), ...parsed };
     }
   } catch {}
@@ -150,19 +219,70 @@ const StoreContext = createContext<Store | null>(null);
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<StoreState>(getDefaultState);
   const [hydrated, setHydrated] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  // Hydrate from localStorage on mount
+  // Hydrate from per-user localStorage + Supabase on mount / auth change
   useEffect(() => {
-    setState(loadState());
-    setHydrated(true);
+    const supabase = createClient();
+    let cancelled = false;
+
+    async function hydrate(uid: string | null) {
+      if (cancelled) return;
+      setUserId(uid);
+      // Start with per-user cache (or defaults if no cache).
+      const cached = loadState(uid);
+      setState(cached);
+      setHydrated(true);
+
+      // If logged in, fetch fresh data from Supabase and merge into state.
+      if (uid) {
+        try {
+          const [{ data: projRows }, { data: contRows }] = await Promise.all([
+            supabase.from("projects").select("*").order("created_at", { ascending: false }),
+            supabase.from("contractors").select("*").order("created_at", { ascending: false }),
+          ]);
+          if (cancelled) return;
+
+          const mappedProjects = ((projRows as unknown as DbProject[]) || []).map(dbToProject);
+          const mappedContractors = ((contRows as unknown as DbContractor[]) || []).map(dbToContractor);
+
+          setState((s) => ({
+            ...s,
+            projects: mappedProjects,
+            contractors: mappedContractors,
+            folders: s.folders.map((f) =>
+              f.id === "f1"
+                ? { ...f, projectIds: mappedProjects.map((p) => p.id) }
+                : f
+            ),
+          }));
+        } catch (e) {
+          // Network/auth issue — silently fall back to cached/default state.
+          console.warn("Supabase hydrate failed", e);
+        }
+      }
+    }
+
+    // Initial auth check.
+    supabase.auth.getUser().then(({ data: { user } }) => hydrate(user?.id ?? null));
+
+    // React to login/logout.
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      hydrate(session?.user?.id ?? null);
+    });
+
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
-  // Persist on change
+  // Persist on change, scoped to the current user.
   useEffect(() => {
     if (hydrated) {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+      try { localStorage.setItem(storageKeyFor(userId), JSON.stringify(state)); } catch {}
     }
-  }, [state, hydrated]);
+  }, [state, hydrated, userId]);
 
   const update = useCallback((fn: (prev: StoreState) => StoreState) => {
     setState((prev) => fn(prev));
