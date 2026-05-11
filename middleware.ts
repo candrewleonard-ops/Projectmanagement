@@ -4,7 +4,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PUBLIC_ROUTES = ['/', '/signup', '/login', '/contact', '/api/twilio'];
+const PUBLIC_ROUTES = ['/landingpage', '/signup', '/login', '/contact', '/api/twilio'];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -46,8 +46,16 @@ export async function middleware(request: NextRequest) {
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
-    url.pathname = '/signup';
-    url.searchParams.set('redirectTo', pathname);
+    url.pathname = '/landingpage';
+    if (pathname !== '/') url.searchParams.set('next', pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // Logged-in users hitting the landing page go to the dashboard.
+  if (user && (pathname === '/landingpage' || pathname === '/signup' || pathname === '/login')) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/';
+    url.search = '';
     return NextResponse.redirect(url);
   }
 

@@ -162,7 +162,7 @@ export default function AdminPage() {
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono"
               placeholder="https://yourapp.com/api/twilio/webhook"
               readOnly
-              value="https://flipcrm.io/api/twilio/webhook"
+              value="https://worktopcrm.com/api/twilio/webhook"
             />
           </div>
         </div>
@@ -194,7 +194,7 @@ export default function AdminPage() {
                 <label className="text-sm font-medium text-slate-700 block mb-1">Email</label>
                 <input
                   className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                  placeholder="jane@flipcrm.io"
+                  placeholder="jane@worktopcrm.com"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                 />

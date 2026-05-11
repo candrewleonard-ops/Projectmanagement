@@ -5,20 +5,20 @@ import {
 import { INVOICE_TERMS } from "./invoice-terms";
 
 // ---- Current User ----
+// Placeholder only — the live UI reads the signed-in user from Supabase
+// via the useUser() hook in src/lib/useUser.ts.
 export const currentUser: User = {
-  id: "u1", name: "Chris Leonard", email: "chris@flipcrm.io", phone: "+15551234567",
+  id: "u1", name: "You", email: "you@worktopcrm.com", phone: "",
   role: "admin", organizationId: "org1", createdAt: "2025-06-01",
 };
 
 export const organization: Organization = {
-  id: "org1", name: "Leonard Property Group", ownerUserId: "u1",
-  members: ["u1", "u2", "u3"], createdAt: "2025-06-01",
+  id: "org1", name: "Your Company", ownerUserId: "u1",
+  members: ["u1"], createdAt: "2025-06-01",
 };
 
 export const users: User[] = [
   currentUser,
-  { id: "u2", name: "Sarah Mitchell", email: "sarah@flipcrm.io", phone: "+15559876543", role: "project_manager", organizationId: "org1", createdAt: "2025-07-15" },
-  { id: "u3", name: "James Rodriguez", email: "james@flipcrm.io", phone: "+15555551234", role: "viewer", organizationId: "org1", createdAt: "2025-09-01" },
 ];
 
 // ---- Folders ----
