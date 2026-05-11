@@ -29,11 +29,19 @@ export default function Dashboard() {
   const completedTasks = store.tasks.filter((t) => t.status === "completed").length;
   const scheduledTasks = store.tasks.filter((t) => t.status === "scheduled").length;
 
+  const today = new Date();
+  const dateLabel = today.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+
   return (
     <div className="space-y-6 fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Project Manager</h1>
-        <p className="text-sm text-slate-500 mt-1">Welcome back, Chris. You have {hotTasks.length} critical items and {unreadComms} unread messages.</p>
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            {hotTasks.length} critical item{hotTasks.length === 1 ? "" : "s"} &middot; {unreadComms} unread message{unreadComms === 1 ? "" : "s"}
+          </p>
+        </div>
+        <p className="text-xs font-medium text-slate-400 tracking-wide uppercase">{dateLabel}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

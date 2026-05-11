@@ -6,7 +6,8 @@ export const dynamic = 'force-dynamic';
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Building2, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import Image from "next/image";
+import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SignUpPage() {
@@ -20,7 +21,7 @@ export default function SignUpPage() {
 function SignUpInner() {
   const router = useRouter();
   const params = useSearchParams();
-  const redirectTo = params.get("redirectTo") || "/projects";
+  const redirectTo = params.get("redirectTo") || "/";
   const supabase = createClient();
 
   const [mode, setMode] = useState<"signup" | "login">("signup");
@@ -98,15 +99,16 @@ function SignUpInner() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 -m-6 -ml-64">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/40 to-emerald-50/30">
       <div className="w-full max-w-md p-8">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center mx-auto mb-3">
-            <Building2 size={28} className="text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900">FlipCRM</h1>
-          <p className="text-sm text-slate-500">by Reinnovation Homes</p>
+          <Image src="/WorkTopLogo.svg" alt="WorkTop CRM" width={72} height={72} priority className="mx-auto mb-3 rounded-2xl bg-white shadow-sm p-2" />
+          <h1 className="text-2xl font-bold text-slate-900">
+            Work<span className="text-blue-500">Top</span>
+            <span className="ml-2 text-slate-400 text-lg font-medium tracking-[0.2em]">CRM</span>
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">Run your projects from anywhere.</p>
         </div>
 
         <form
@@ -234,8 +236,8 @@ function SignUpInner() {
         </form>
 
         <p className="text-center text-xs text-slate-400 mt-6">
-          <Link href="/" className="text-blue-600 hover:text-blue-700">
-            ← Back to Dashboard
+          <Link href="/landingpage" className="text-blue-600 hover:text-blue-700">
+            ← Back to home
           </Link>
         </p>
       </div>

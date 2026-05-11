@@ -3,8 +3,9 @@ import "./globals.css";
 import { ClientLayout } from "@/components/ClientLayout";
 
 export const metadata: Metadata = {
-  title: "FlipCRM — Fix & Flip Project Management",
-  description: "Manage your fix-and-flip real estate projects, contractors, and invoices.",
+  title: "WorkTop CRM — Run your projects from anywhere",
+  description: "WorkTop CRM is a project, contractor, and invoice command center for builders, flippers, and operators.",
+  icons: { icon: "/WorkTopLogo.svg" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
