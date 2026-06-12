@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Phone, MessageSquare, Mail, Star, Search, ChevronDown, X, Send, Clock } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { useToast } from "@/components/Toast";
 import { cn, formatRelativeTime } from "@/lib/utils";
 
 export default function ContractorsPage() {
@@ -283,6 +284,7 @@ export default function ContractorsPage() {
 import React from "react";
 
 function AddContractorModal({ store, onClose }: { store: ReturnType<typeof useStore>; onClose: () => void }) {
+  const toast = useToast();
   const [form, setForm] = useState({
     name: "", company: "", email: "", phone: "",
     city: "", state: "", zip: "",
@@ -291,19 +293,23 @@ function AddContractorModal({ store, onClose }: { store: ReturnType<typeof useSt
   const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   const handleCreate = () => {
-    if (!form.name.trim()) return;
+    if (!form.name.trim()) {
+      toast.error("Contractor name is required");
+      return;
+    }
     store.addContractor({
       id: `c-${Date.now()}`, name: form.name, company: form.company, email: form.email, phone: form.phone,
       city: form.city, state: form.state, zip: form.zip,
       specialty: form.specialty.split(",").map((s) => s.trim()).filter(Boolean),
       rating: 0, projectIds: [], totalJobsCompleted: 0, notes: "",
     });
+    toast.success(`Added ${form.name}`);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 fade-in" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl scale-in" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-xl font-bold text-slate-900 mb-4">Add Contractor</h2>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">

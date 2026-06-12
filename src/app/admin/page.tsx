@@ -6,6 +6,7 @@ import {
   Mail, Phone, Crown, Eye, Wrench, Trash2, Edit3,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { useToast } from "@/components/Toast";
 import { cn, formatDate } from "@/lib/utils";
 import { UserRole } from "@/lib/types";
 
@@ -17,6 +18,7 @@ const roleConfig: Record<UserRole, { label: string; icon: typeof Shield; color: 
 
 export default function AdminPage() {
   const store = useStore();
+  const toast = useToast();
   const [showAddUser, setShowAddUser] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
@@ -177,8 +179,8 @@ export default function AdminPage() {
 
       {/* Add User Modal */}
       {showAddUser && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setShowAddUser(false)}>
-          <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 fade-in" onClick={() => setShowAddUser(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl scale-in" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-xl font-bold text-slate-900 mb-4">Add New User</h2>
             <div className="space-y-4">
               <div>
@@ -237,7 +239,24 @@ export default function AdminPage() {
               </div>
               <div className="flex gap-3 justify-end mt-6">
                 <button onClick={() => setShowAddUser(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancel</button>
-                <button onClick={() => setShowAddUser(false)} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                <button onClick={() => {
+                  if (!newName.trim() || !newEmail.trim()) {
+                    toast.error("Name and email are required");
+                    return;
+                  }
+                  store.addUser({
+                    id: `u-${Date.now()}`,
+                    name: newName.trim(),
+                    email: newEmail.trim(),
+                    phone: newPhone.trim(),
+                    role: newRole,
+                    organizationId: store.organization.id,
+                    createdAt: new Date().toISOString().slice(0, 10),
+                  });
+                  toast.success(`Added ${newName.trim()}`);
+                  setNewName(""); setNewEmail(""); setNewPhone(""); setNewRole("project_manager");
+                  setShowAddUser(false);
+                }} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium shadow-md shadow-blue-500/20">
                   <UserPlus size={14} className="inline mr-1" /> Add User
                 </button>
               </div>

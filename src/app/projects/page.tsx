@@ -181,7 +181,7 @@ function ProjectsContent() {
       {showNewProject && <NewProjectModal store={store} onClose={() => setShowNewProject(false)} onCreated={(name) => toast.success(`Created ${name}`)} />}
 
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setDeleteConfirm(null)}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 fade-in" onClick={() => setDeleteConfirm(null)}>
           <div className="bg-white rounded-2xl p-6 shadow-2xl max-w-sm" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-slate-900 mb-2">Delete Project?</h3>
             <p className="text-sm text-slate-500 mb-4">This will permanently delete the project and all associated tasks and expenses.</p>
@@ -226,7 +226,7 @@ function NewProjectModal({ store, onClose, onCreated }: { store: ReturnType<type
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 fade-in" onClick={onClose}>
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-auto p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-xl font-bold text-slate-900 mb-4">Create New Project</h2>
         <div className="space-y-4">
