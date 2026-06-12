@@ -83,7 +83,7 @@ export default function SignUpPage() {
             <div className="relative flex justify-center text-xs"><span className="bg-white px-3 text-slate-400">or continue with email</span></div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} noValidate className="space-y-3">
             {mode === "signup" && (
               <div className="relative">
                 <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
