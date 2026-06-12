@@ -40,7 +40,7 @@ export default function SignUpPage() {
   };
 
   const handleGoogle = () => {
-    signIn("demo@flipcrm.io", "Chris Leonard");
+    signIn("demo@flipcrm.io", "Demo User");
     toast.success("Signed in with Google");
     router.push("/");
   };

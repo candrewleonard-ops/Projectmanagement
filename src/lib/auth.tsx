@@ -26,13 +26,6 @@ function getInitials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-const DEFAULT_USER: AuthUser = {
-  id: "local-default",
-  name: "Chris Leonard",
-  email: "chris@flipcrm.io",
-  avatarInitials: "CL",
-};
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [hydrated, setHydrated] = useState(false);
@@ -42,14 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const raw = localStorage.getItem(AUTH_KEY);
       if (raw) {
         setUser(JSON.parse(raw));
-      } else {
-        // First open — seed with default user so the app feels signed-in
-        setUser(DEFAULT_USER);
-        localStorage.setItem(AUTH_KEY, JSON.stringify(DEFAULT_USER));
       }
-    } catch {
-      setUser(DEFAULT_USER);
-    }
+    } catch {}
     setHydrated(true);
   }, []);
 

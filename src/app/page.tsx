@@ -15,7 +15,7 @@ import { TaskItem } from "@/lib/types";
 export default function Dashboard() {
   const store = useStore();
   const { user } = useAuth();
-  const firstName = (user?.name || "Chris").split(" ")[0];
+  const firstName = (user?.name || "").split(" ")[0] || "there";
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const activeProjects = store.getActiveProjects();
