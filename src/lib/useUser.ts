@@ -42,7 +42,23 @@ export function useUser() {
           initials: deriveInitials(name),
         });
       } else {
-        setUser(null);
+        // Fallback: check localStorage demo auth
+        try {
+          const raw = localStorage.getItem("flipcrm_auth_v1");
+          if (raw) {
+            const local = JSON.parse(raw);
+            setUser({
+              id: local.id || "local-default",
+              email: local.email || "",
+              name: local.name || "User",
+              initials: local.avatarInitials || deriveInitials(local.name || "User"),
+            });
+          } else {
+            setUser(null);
+          }
+        } catch {
+          setUser(null);
+        }
       }
       setLoading(false);
     });
@@ -74,5 +90,9 @@ export function useUser() {
 export async function signOut() {
   const supabase = createClient();
   await supabase.auth.signOut();
-  if (typeof window !== "undefined") window.location.href = "/landingpage";
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("flipcrm_auth_v1");
+    document.cookie = "wt_demo_auth=; path=/; max-age=0";
+    window.location.href = "/landingpage";
+  }
 }
