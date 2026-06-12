@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Plus, MapPin, Search, Grid3X3, List, Trash2, Edit3 } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { useToast } from "@/components/Toast";
 import { formatCurrency, statusColor, progressPercent, cn } from "@/lib/utils";
 import { ProjectStatus } from "@/lib/types";
 
@@ -16,6 +17,7 @@ function ProjectsContent() {
   const searchParams = useSearchParams();
   const folderFilter = searchParams.get("folder");
   const store = useStore();
+  const toast = useToast();
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -36,8 +38,10 @@ function ProjectsContent() {
   const activeFolder = store.folders.find((f) => f.id === folderFilter);
 
   const handleDelete = (id: string) => {
+    const p = store.getProject(id);
     store.deleteProject(id);
     setDeleteConfirm(null);
+    toast.success(`Deleted ${p?.name || "project"}`);
   };
 
   return (
@@ -47,7 +51,7 @@ function ProjectsContent() {
           <h1 className="text-2xl font-bold text-slate-900">{activeFolder ? activeFolder.name : "All Projects"}</h1>
           <p className="text-sm text-slate-500 mt-1">{filtered.length} projects</p>
         </div>
-        <button onClick={() => setShowNewProject(true)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+        <button onClick={() => setShowNewProject(true)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition shadow-sm shadow-blue-200">
           <Plus size={16} /> New Project
         </button>
       </div>
@@ -77,7 +81,22 @@ function ProjectsContent() {
         </div>
       </div>
 
-      {viewMode === "grid" ? (
+      {filtered.length === 0 ? (
+        <div className="stat-card flex flex-col items-center py-16">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-100 to-violet-100 flex items-center justify-center mb-4">
+            <Plus size={28} className="text-blue-500" />
+          </div>
+          <p className="text-lg font-semibold text-slate-700 mb-1">{store.projects.length === 0 ? "No Projects Yet" : "No Projects Match"}</p>
+          <p className="text-sm text-slate-400 mb-5">
+            {store.projects.length === 0 ? "Get started by creating your first project" : "Try adjusting your filters"}
+          </p>
+          {store.projects.length === 0 && (
+            <button onClick={() => setShowNewProject(true)} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+              <Plus size={16} /> New Project
+            </button>
+          )}
+        </div>
+      ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((project) => {
             const pTasks = store.getProjectTasks(project.id);
@@ -159,10 +178,10 @@ function ProjectsContent() {
         </div>
       )}
 
-      {showNewProject && <NewProjectModal store={store} onClose={() => setShowNewProject(false)} />}
+      {showNewProject && <NewProjectModal store={store} onClose={() => setShowNewProject(false)} onCreated={(name) => toast.success(`Created ${name}`)} />}
 
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setDeleteConfirm(null)}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 fade-in" onClick={() => setDeleteConfirm(null)}>
           <div className="bg-white rounded-2xl p-6 shadow-2xl max-w-sm" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-slate-900 mb-2">Delete Project?</h3>
             <p className="text-sm text-slate-500 mb-4">This will permanently delete the project and all associated tasks and expenses.</p>
@@ -177,7 +196,7 @@ function ProjectsContent() {
   );
 }
 
-function NewProjectModal({ store, onClose }: { store: ReturnType<typeof useStore>; onClose: () => void }) {
+function NewProjectModal({ store, onClose, onCreated }: { store: ReturnType<typeof useStore>; onClose: () => void; onCreated?: (name: string) => void }) {
   const [form, setForm] = useState({
     name: "", street: "", city: "", state: "", zip: "",
     purchasePrice: "", estimatedARV: "", totalBudget: "",
@@ -202,11 +221,12 @@ function NewProjectModal({ store, onClose }: { store: ReturnType<typeof useStore
       scopeOfWork: form.scopeOfWork,
       createdAt: new Date().toISOString().slice(0, 10),
     });
+    onCreated?.(form.name);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 fade-in" onClick={onClose}>
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-auto p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-xl font-bold text-slate-900 mb-4">Create New Project</h2>
         <div className="space-y-4">

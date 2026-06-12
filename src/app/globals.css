@@ -20,7 +20,7 @@
 * { box-sizing: border-box; }
 
 body {
-  background: var(--background);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #f8fafc 100%);
   color: var(--foreground);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
@@ -33,11 +33,14 @@ body {
 .stat-card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 1.25rem;
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.2s, transform 0.2s;
 }
-.stat-card:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+.stat-card:hover {
+  box-shadow: 0 8px 30px rgba(0,0,0,0.07);
+  transform: translateY(-1px);
+}
 
 .badge {
   display: inline-flex;
@@ -47,6 +50,12 @@ body {
   font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.25rem;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  border-color: #93c5fd;
 }
 
 .heat-pulse {
@@ -59,9 +68,43 @@ body {
 }
 
 .fade-in {
-  animation: fadeIn 0.3s ease-in;
+  animation: fadeIn 0.3s ease-out;
 }
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in {
+  animation: slideIn 0.25s ease-out;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Better disabled state on buttons */
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Smooth all default transitions */
+button, a, input, select, textarea {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Selection */
+::selection {
+  background: rgba(37, 99, 235, 0.2);
 }

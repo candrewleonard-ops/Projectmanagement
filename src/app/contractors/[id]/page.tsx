@@ -378,7 +378,7 @@ export default function ContractorDetailPage() {
 
       {/* Delete Confirm */}
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setDeleteConfirm(false)}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 fade-in" onClick={() => setDeleteConfirm(false)}>
           <div className="bg-white rounded-2xl p-6 shadow-2xl max-w-sm" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-bold mb-2">Delete {contractor.name}?</h3>
             <p className="text-sm text-slate-500 mb-4">This will remove them from all projects.</p>
@@ -411,7 +411,7 @@ function EditContractorModal({ contractor, store, onClose }: { contractor: any; 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 fade-in" onClick={onClose}>
       <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-xl font-bold mb-4">Edit Contractor</h2>
         <div className="space-y-3">
