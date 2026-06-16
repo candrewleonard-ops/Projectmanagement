@@ -40,6 +40,21 @@ function SignUpInner() {
     setLoading(true);
 
     try {
+      // Quick login with empty fields — bypass Supabase, use localStorage + cookie
+      if (mode === "login" && !form.email.trim() && !form.password.trim()) {
+        const demoUser = { id: "local-default", email: "chris@worktopcrm.com", name: "Chris Leonard", avatarInitials: "CL" };
+        localStorage.setItem("flipcrm_auth_v1", JSON.stringify(demoUser));
+        document.cookie = "wt_demo_auth=1; path=/; max-age=31536000; SameSite=Lax";
+        router.push(redirectTo);
+        router.refresh();
+        return;
+      }
+
+      if (!form.email.trim() || !form.password.trim()) {
+        setError("Email and password are required");
+        return;
+      }
+
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
           email: form.email,
@@ -113,6 +128,7 @@ function SignUpInner() {
 
         <form
           onSubmit={onSubmitForm}
+          noValidate
           className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6"
         >
           {/* Tabs */}
@@ -162,7 +178,6 @@ function SignUpInner() {
                   placeholder="Full Name"
                   value={form.name}
                   onChange={(e) => set("name", e.target.value)}
-                  required
                   className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -192,7 +207,6 @@ function SignUpInner() {
                 placeholder="Password (8+ chars)"
                 value={form.password}
                 onChange={(e) => set("password", e.target.value)}
-                required
                 minLength={8}
                 autoComplete={
                   mode === "signup" ? "new-password" : "current-password"

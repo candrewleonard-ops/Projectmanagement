@@ -29,7 +29,7 @@ export function Sidebar() {
   if (pathname === "/signup" || pathname === "/login" || pathname === "/landingpage") return null;
 
   return (
-    <aside className="fixed inset-y-0 left-0 w-64 bg-slate-900 text-slate-200 flex flex-col z-30">
+    <aside className="fixed inset-y-0 left-0 w-64 bg-gradient-to-b from-slate-900 to-slate-950 text-slate-200 flex flex-col z-30">
       <Link href="/" className="h-20 flex items-center gap-3 px-4 border-b border-slate-700/50 hover:bg-slate-800/40 transition-colors">
         <Image
           src="/WorkTopLogo.svg"
@@ -47,14 +47,17 @@ export function Sidebar() {
         </div>
       </Link>
 
-      <nav className="flex-1 py-4 px-3 space-y-1 overflow-auto">
+      <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-auto">
         {nav.map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
           return (
             <Link key={item.href} href={item.href}
-              className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                active ? "bg-blue-600/20 text-blue-300" : "text-slate-400 hover:text-white hover:bg-slate-800"
+              className={cn("relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                active
+                  ? "bg-blue-600/20 text-blue-300 shadow-lg shadow-blue-500/10"
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
               )}>
+              {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-blue-500 rounded-r-full" />}
               <item.icon size={18} />
               {item.label}
             </Link>

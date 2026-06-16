@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Phone, MessageSquare, Mail, Star, Search, ChevronDown, X, Send, Clock } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { useToast } from "@/components/Toast";
 import { cn, formatRelativeTime } from "@/lib/utils";
 
 export default function ContractorsPage() {
@@ -69,9 +70,9 @@ export default function ContractorsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Contractors</h1>
-          <p className="text-sm text-slate-500 mt-1">{filtered.length} contractors</p>
+          <p className="text-sm text-slate-500 mt-1">{filtered.length} contractor{filtered.length !== 1 ? "s" : ""} &middot; {states.length} state{states.length !== 1 ? "s" : ""}</p>
         </div>
-        <button onClick={() => setShowAddContractor(true)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+        <button onClick={() => setShowAddContractor(true)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition shadow-sm shadow-blue-200">
           <Plus size={16} /> Add Contractor
         </button>
       </div>
@@ -95,8 +96,26 @@ export default function ContractorsPage() {
         </select>
       </div>
 
+      {/* Empty State */}
+      {filtered.length === 0 && (
+        <div className="stat-card flex flex-col items-center py-16">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-100 to-violet-100 flex items-center justify-center mb-4">
+            <Plus size={28} className="text-blue-500" />
+          </div>
+          <p className="text-lg font-semibold text-slate-700 mb-1">{store.contractors.length === 0 ? "No Contractors Yet" : "No Matches"}</p>
+          <p className="text-sm text-slate-400 mb-5">
+            {store.contractors.length === 0 ? "Add your first contractor to start building your team" : "Try adjusting your search or filters"}
+          </p>
+          {store.contractors.length === 0 && (
+            <button onClick={() => setShowAddContractor(true)} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+              <Plus size={16} /> Add Contractor
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Close CRM-style Table */}
-      <div className="stat-card p-0 overflow-hidden">
+      {filtered.length > 0 && <div className="stat-card p-0 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
@@ -254,7 +273,7 @@ export default function ContractorsPage() {
             })}
           </tbody>
         </table>
-      </div>
+      </div>}
 
       {/* Add Contractor Modal */}
       {showAddContractor && <AddContractorModal store={store} onClose={() => setShowAddContractor(false)} />}
@@ -265,6 +284,7 @@ export default function ContractorsPage() {
 import React from "react";
 
 function AddContractorModal({ store, onClose }: { store: ReturnType<typeof useStore>; onClose: () => void }) {
+  const toast = useToast();
   const [form, setForm] = useState({
     name: "", company: "", email: "", phone: "",
     city: "", state: "", zip: "",
@@ -273,19 +293,23 @@ function AddContractorModal({ store, onClose }: { store: ReturnType<typeof useSt
   const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   const handleCreate = () => {
-    if (!form.name.trim()) return;
+    if (!form.name.trim()) {
+      toast.error("Contractor name is required");
+      return;
+    }
     store.addContractor({
       id: `c-${Date.now()}`, name: form.name, company: form.company, email: form.email, phone: form.phone,
       city: form.city, state: form.state, zip: form.zip,
       specialty: form.specialty.split(",").map((s) => s.trim()).filter(Boolean),
       rating: 0, projectIds: [], totalJobsCompleted: 0, notes: "",
     });
+    toast.success(`Added ${form.name}`);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 fade-in" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl scale-in" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-xl font-bold text-slate-900 mb-4">Add Contractor</h2>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">

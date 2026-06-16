@@ -44,7 +44,9 @@ export async function middleware(request: NextRequest) {
     (p) => pathname === p || pathname.startsWith(p + '/')
   );
 
-  if (!user && !isPublic) {
+  const hasDemoAuth = request.cookies.get('wt_demo_auth')?.value === '1';
+
+  if (!user && !isPublic && !hasDemoAuth) {
     const url = request.nextUrl.clone();
     url.pathname = '/landingpage';
     if (pathname !== '/') url.searchParams.set('next', pathname);
@@ -52,7 +54,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Logged-in users hitting the landing page go to the dashboard.
-  if (user && (pathname === '/landingpage' || pathname === '/signup' || pathname === '/login')) {
+  if ((user || hasDemoAuth) && (pathname === '/landingpage' || pathname === '/signup' || pathname === '/login')) {
     const url = request.nextUrl.clone();
     url.pathname = '/';
     url.search = '';
