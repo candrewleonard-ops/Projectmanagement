@@ -85,6 +85,13 @@ export type TaskStatus = "completed" | "in_progress" | "scheduled" | "blocked" |
 export type TaskPriority = "critical" | "high" | "medium" | "low";
 export type QualityCheck = "passed" | "failed" | "pending";
 
+// A small checklist step inside a task (e.g. "Frame walls & partitions").
+export interface Microtask {
+  id: string;
+  title: string;
+  done: boolean;
+}
+
 export interface TaskItem {
   id: string;
   projectId: string;
@@ -103,6 +110,7 @@ export interface TaskItem {
   category: string;
   notes?: string;
   photos?: ProjectPhoto[];
+  microtasks?: Microtask[];
 }
 
 // ---- Contractors ----
